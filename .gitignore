@@ -17,6 +17,9 @@ dist-ssr
 # Dependencies
 node_modules
 
+# Generated at build time — contains Firebase config, never commit
+public/firebase-messaging-sw.js
+
 # Editor
 .DS_Store
 .vscode
