@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
+import { HelpButton } from '../components/auth/HelpSection'
 
 type Tab = 'vehicles' | 'history'
 
@@ -37,13 +38,14 @@ export function DashboardPage() {
             </div>
             <span className="font-bold text-gray-900">ParkPeace</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/profile')}
               className="text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors truncate max-w-[160px]"
             >
               {displayName}
             </button>
+            <HelpButton />
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"

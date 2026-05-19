@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers } from 'lucide-react'
+import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X } from 'lucide-react'
 
 type Section = 'howto' | 'register' | 'notifications' | 'faq' | 'buildplan'
 
 const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'howto', label: 'How to Use', icon: <BookOpen className="w-4 h-4" /> },
   { id: 'register', label: 'How to Register', icon: <UserPlus className="w-4 h-4" /> },
-  { id: 'notifications', label: 'Turn On Notifications', icon: <Bell className="w-4 h-4" /> },
+  { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
   { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
   { id: 'buildplan', label: 'Build Plan', icon: <Layers className="w-4 h-4" /> },
 ]
@@ -26,7 +26,7 @@ function SectionContent({ id }: { id: Section }) {
     case 'register':
       return (
         <div className="space-y-3 text-sm text-gray-600">
-          <p><strong>1.</strong> Click the <strong>Register</strong> tab above.</p>
+          <p><strong>1.</strong> Click the <strong>Register</strong> tab on the sign-in page.</p>
           <p><strong>2.</strong> Enter your email address and choose a password (min. 6 characters).</p>
           <p><strong>3.</strong> Click <strong>Create Account</strong>. You'll be switched to Sign In automatically.</p>
           <p><strong>4.</strong> Sign in with the same email and password.</p>
@@ -37,13 +37,12 @@ function SectionContent({ id }: { id: Section }) {
       return (
         <div className="space-y-3 text-sm text-gray-600">
           <p>ParkPeace uses Firebase Cloud Messaging (FCM) to send push notifications to your browser.</p>
-          <p><strong>Steps:</strong></p>
           <p><strong>1.</strong> Sign in and go to your dashboard.</p>
           <p><strong>2.</strong> Tap your name (top right) to open Profile.</p>
           <p><strong>3.</strong> In the <strong>Push Notifications</strong> section, tap <strong>Enable</strong>.</p>
           <p><strong>4.</strong> When your browser asks for permission, click <strong>Allow</strong>.</p>
           <p><strong>5.</strong> The button turns green — notifications are now active.</p>
-          <p className="text-amber-700 bg-amber-50 rounded-lg p-2"><strong>iPhone:</strong> Notifications only work on Safari iOS 16.4+ when the site is added to your Home Screen. Open the site in Safari → Share → Add to Home Screen, then enable notifications.</p>
+          <p className="text-amber-700 bg-amber-50 rounded-lg p-2"><strong>iPhone:</strong> Notifications only work on Safari iOS 16.4+ when the site is added to your Home Screen. Open in Safari → Share → Add to Home Screen, then enable notifications.</p>
         </div>
       )
     case 'faq':
@@ -101,9 +100,72 @@ function SectionContent({ id }: { id: Section }) {
   }
 }
 
+function HelpPanelContent() {
+  const [active, setActive] = useState<Section>('howto')
+  return (
+    <>
+      <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 shrink-0">
+        {sections.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActive(s.id)}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors shrink-0 border-b-2 ${
+              active === s.id
+                ? 'border-primary-600 text-primary-700 bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {s.icon}
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <div className="p-4 overflow-y-auto">
+        <SectionContent id={active} />
+      </div>
+    </>
+  )
+}
+
+// ── Modal version — used in page headers ─────────────────────────────────────
+
+export function HelpButton() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center justify-center w-7 h-7 rounded-full text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+        aria-label="Help & Documentation"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-primary-600" />
+                <h2 className="font-semibold text-gray-900">Help &amp; Documentation</h2>
+              </div>
+              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <HelpPanelContent />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ── Collapsible version — used on the auth/sign-in page ──────────────────────
+
 export function HelpSection() {
   const [open, setOpen] = useState(false)
-  const [active, setActive] = useState<Section>('howto')
 
   return (
     <div className="w-full max-w-md mt-4">
@@ -120,26 +182,7 @@ export function HelpSection() {
 
       {open && (
         <div className="mt-2 bg-white rounded-xl border border-gray-200 overflow-hidden">
-          {/* Section tabs */}
-          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50">
-            {sections.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActive(s.id)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors shrink-0 border-b-2 ${
-                  active === s.id
-                    ? 'border-primary-600 text-primary-700 bg-white'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {s.icon}
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <div className="p-4">
-            <SectionContent id={active} />
-          </div>
+          <HelpPanelContent />
         </div>
       )}
     </div>
