@@ -11,6 +11,7 @@ interface Props {
 export function ProfileForm({ profile, onSave }: Props) {
   const [fullName, setFullName] = useState(profile?.full_name ?? '')
   const [phone, setPhone] = useState(profile?.phone ?? '')
+  const [whatsapp, setWhatsapp] = useState(profile?.whatsapp_number ?? '')
   const [emergencyName, setEmergencyName] = useState(profile?.emergency_name ?? '')
   const [emergencyPhone, setEmergencyPhone] = useState(profile?.emergency_phone ?? '')
   const [emergencyRel, setEmergencyRel] = useState(profile?.emergency_rel ?? '')
@@ -30,6 +31,7 @@ export function ProfileForm({ profile, onSave }: Props) {
     const { error } = await onSave({
       full_name: fullName.trim() || null,
       phone: phone.trim(),
+      whatsapp_number: whatsapp.trim() || null,
       emergency_name: emergencyName.trim() || null,
       emergency_phone: emergencyPhone.trim() || null,
       emergency_rel: emergencyRel.trim() || null,
@@ -79,6 +81,17 @@ export function ProfileForm({ profile, onSave }: Props) {
               required
             />
             <p className="text-xs text-gray-400 mt-1">Shown on the call dialer when someone contacts you.</p>
+          </div>
+          <div>
+            <label className="label">WhatsApp Number</label>
+            <input
+              type="tel"
+              className="input"
+              placeholder="+91 98765 43210"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+            />
+            <p className="text-xs text-gray-400 mt-1">When someone contacts you, their WhatsApp will open with a pre-filled message. Your number is never shown to them.</p>
           </div>
         </div>
       </div>

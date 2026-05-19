@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Car } from 'lucide-react'
+import { HelpSection } from './HelpSection'
 
 type Tab = 'login' | 'register'
 
@@ -100,6 +101,7 @@ export function AuthForm() {
             </button>
           </form>
         </div>
+        <HelpSection />
       </div>
     </div>
   )

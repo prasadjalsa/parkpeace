@@ -1,31 +1,30 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
-import { Car, LogOut, User, QrCode, Clock } from 'lucide-react'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { Car, LogOut, QrCode, Clock } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
-import { ProfileForm } from '../components/dashboard/ProfileForm'
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
 
-type Tab = 'profile' | 'qrcodes' | 'history'
+type Tab = 'vehicles' | 'history'
 
 const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
-  { id: 'qrcodes', label: 'My QR Codes', icon: <QrCode className="w-4 h-4" /> },
+  { id: 'vehicles', label: 'My Vehicles', icon: <QrCode className="w-4 h-4" /> },
   { id: 'history', label: 'Scan History', icon: <Clock className="w-4 h-4" /> },
 ]
 
 export function DashboardPage() {
   const { user, loading, signOut } = useAuth()
-  const { profile, saveProfile } = useProfile(user?.id)
-  const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const { profile } = useProfile(user?.id)
+  const [activeTab, setActiveTab] = useState<Tab>('vehicles')
+  const navigate = useNavigate()
 
-  // If the user's FCM token was already saved, nothing to do here.
-  // Token registration happens in ProfileForm when user clicks "Enable Notifications".
   useEffect(() => {}, [user?.id])
 
   if (loading) return null
   if (!user) return <Navigate to="/" replace />
+
+  const displayName = profile?.full_name?.trim() || user.email || 'Account'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,9 +38,12 @@ export function DashboardPage() {
             <span className="font-bold text-gray-900">ParkPeace</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 hidden sm:block truncate max-w-[180px]">
-              {user.email}
-            </span>
+            <button
+              onClick={() => navigate('/profile')}
+              className="text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors truncate max-w-[160px]"
+            >
+              {displayName}
+            </button>
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
@@ -68,7 +70,7 @@ export function DashboardPage() {
                 }`}
               >
                 {tab.icon}
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             ))}
           </nav>
@@ -77,10 +79,7 @@ export function DashboardPage() {
 
       {/* Content */}
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {activeTab === 'profile' && (
-          <ProfileForm profile={profile} onSave={saveProfile} />
-        )}
-        {activeTab === 'qrcodes' && (
+        {activeTab === 'vehicles' && (
           <QRCodeManager userId={user.id} />
         )}
         {activeTab === 'history' && (

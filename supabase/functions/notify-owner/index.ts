@@ -130,9 +130,10 @@ serve(async (req) => {
   }
 
   try {
-    const { qrCodeId, scannerName, note, action } = await req.json() as {
+    const { qrCodeId, scannerName, scannerPhone, note, action } = await req.json() as {
       qrCodeId: string
       scannerName: string
+      scannerPhone?: string
       note: string
       action: "contact" | "emergency"
     }
@@ -167,7 +168,7 @@ serve(async (req) => {
     // Fetch owner profile separately (no direct FK from qr_codes to profiles)
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, emergency_name, emergency_phone, fcm_token")
+      .select("id, full_name, phone, whatsapp_number, emergency_name, emergency_phone, fcm_token")
       .eq("id", qrCode.user_id)
       .single()
 
@@ -204,13 +205,19 @@ serve(async (req) => {
       qr_code_id: qrCodeId,
       action,
       scanner_name: scannerName,
+      scanner_phone: scannerPhone ?? null,
       scanner_note: note ?? null,
     })
 
-    // For emergency: return the emergency phone so the scanner's browser opens tel:
+    // For emergency: return emergency phone so scanner's browser opens tel:
+    // For contact: return whatsapp number + car name so scanner's browser opens wa.me
     const response: Record<string, unknown> = { success: true }
     if (action === "emergency" && profile.emergency_phone) {
       response.emergencyPhone = profile.emergency_phone
+    }
+    if (action === "contact" && (profile as Record<string, unknown>).whatsapp_number) {
+      response.whatsappNumber = (profile as Record<string, unknown>).whatsapp_number
+      response.carName = qrCode.name
     }
 
     return new Response(JSON.stringify(response), {

@@ -7,12 +7,14 @@ interface ScanEvent {
   action: string
   scanner_name: string | null
   scanner_note: string | null
+  scanner_phone: string | null
   scanned_at: string
   qr_codes: { name: string } | null
 }
 
 interface Props {
   userId: string
+  qrCodeId?: string
 }
 
 const actionMeta: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -33,22 +35,26 @@ const actionMeta: Record<string, { label: string; icon: React.ReactNode; color: 
   },
 }
 
-export function ScanHistory({ userId: _userId }: Props) {
+export function ScanHistory({ userId: _userId, qrCodeId }: Props) {
   const [events, setEvents] = useState<ScanEvent[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // RLS policy automatically filters to only this user's scan events
-    supabase
+    let query = supabase
       .from('scan_events')
-      .select('id, action, scanner_name, scanner_note, scanned_at, qr_codes(name)')
+      .select('id, action, scanner_name, scanner_note, scanner_phone, scanned_at, qr_codes(name)')
       .order('scanned_at', { ascending: false })
       .limit(50)
-      .then(({ data }) => {
-        setEvents((data as unknown as ScanEvent[]) ?? [])
-        setLoading(false)
-      })
-  }, [])
+
+    if (qrCodeId) {
+      query = query.eq('qr_code_id', qrCodeId)
+    }
+
+    query.then(({ data }) => {
+      setEvents((data as unknown as ScanEvent[]) ?? [])
+      setLoading(false)
+    })
+  }, [qrCodeId])
 
   if (loading) {
     return <div className="text-center py-12 text-gray-400 text-sm">Loading…</div>
@@ -80,12 +86,22 @@ export function ScanHistory({ userId: _userId }: Props) {
                   <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${meta.color}`}>
                     {meta.icon} {meta.label}
                   </span>
-                  <span className="text-xs font-semibold text-gray-700">
-                    {event.qr_codes?.name ?? 'Unknown QR'}
-                  </span>
+                  {!qrCodeId && (
+                    <span className="text-xs font-semibold text-gray-700">
+                      {event.qr_codes?.name ?? 'Unknown QR'}
+                    </span>
+                  )}
                 </div>
                 {event.scanner_name && (
                   <p className="text-sm text-gray-700 mt-1.5 font-medium">{event.scanner_name}</p>
+                )}
+                {event.scanner_phone && (
+                  <a
+                    href={`tel:${event.scanner_phone}`}
+                    className="text-xs text-primary-600 hover:underline mt-0.5 block"
+                  >
+                    {event.scanner_phone}
+                  </a>
                 )}
                 {event.scanner_note && (
                   <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{event.scanner_note}</p>

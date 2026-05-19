@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { Download, Plus, Trash2, QrCode, X } from 'lucide-react'
+import { Download, Plus, Trash2, QrCode, X, Clock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { ScanHistory } from './ScanHistory'
 
 interface QRCode {
   id: string
@@ -20,6 +21,7 @@ export function QRCodeManager({ userId }: Props) {
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [historyFor, setHistoryFor] = useState<QRCode | null>(null)
   const modalInputRef = useRef<HTMLInputElement>(null)
 
   async function fetchCodes() {
@@ -55,7 +57,7 @@ export function QRCodeManager({ userId }: Props) {
   }
 
   async function deleteCode(id: string) {
-    if (!confirm('Delete this QR code? Anyone with a printed copy will get a "not found" page.')) return
+    if (!confirm('Delete this vehicle QR? Anyone with a printed copy will get a "not found" page.')) return
     setDeleting(id)
     await supabase.from('qr_codes').delete().eq('id', id)
     setCodes((prev) => prev.filter((c) => c.id !== id))
@@ -79,17 +81,17 @@ export function QRCodeManager({ userId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-500">{codes.length} QR code{codes.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500">{codes.length} vehicle{codes.length !== 1 ? 's' : ''}</p>
         <button onClick={() => setShowModal(true)} className="btn-primary py-2 text-xs">
-          <Plus className="w-4 h-4" /> New QR Code
+          <Plus className="w-4 h-4" /> Add Vehicle
         </button>
       </div>
 
       {codes.length === 0 ? (
         <div className="card text-center py-12">
           <QrCode className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm font-medium">No QR codes yet</p>
-          <p className="text-gray-400 text-xs mt-1">Create one for each car or vehicle</p>
+          <p className="text-gray-500 text-sm font-medium">No vehicles yet</p>
+          <p className="text-gray-400 text-xs mt-1">Add one for each car or vehicle you park</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -109,7 +111,7 @@ export function QRCodeManager({ userId }: Props) {
                 <div className="text-center">
                   <p className="font-semibold text-gray-900">{code.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Created {new Date(code.created_at).toLocaleDateString()}
+                    Added {new Date(code.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2 w-full">
@@ -117,7 +119,14 @@ export function QRCodeManager({ userId }: Props) {
                     onClick={() => downloadQR(code.id, code.name)}
                     className="btn-secondary flex-1 py-2 text-xs"
                   >
-                    <Download className="w-3.5 h-3.5" /> Download PNG
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </button>
+                  <button
+                    onClick={() => setHistoryFor(code)}
+                    className="btn-secondary py-2 text-xs px-3"
+                    title="View scan history"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => deleteCode(code.id)}
@@ -134,19 +143,19 @@ export function QRCodeManager({ userId }: Props) {
         </div>
       )}
 
-      {/* Create modal */}
+      {/* Add Vehicle modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-gray-900">New QR Code</h3>
+              <h3 className="font-semibold text-gray-900">Add Vehicle</h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="label">Vehicle / Label Name</label>
+                <label className="label">Vehicle Name</label>
                 <input
                   ref={modalInputRef}
                   type="text"
@@ -165,9 +174,29 @@ export function QRCodeManager({ userId }: Props) {
                   disabled={creating || !newName.trim()}
                   className="btn-primary flex-1"
                 >
-                  {creating ? 'Creating…' : 'Create'}
+                  {creating ? 'Creating…' : 'Add'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Per-vehicle scan history modal */}
+      {historyFor && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 className="font-semibold text-gray-900">Scan History</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{historyFor.name}</p>
+              </div>
+              <button onClick={() => setHistoryFor(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4">
+              <ScanHistory userId={userId} qrCodeId={historyFor.id} />
             </div>
           </div>
         </div>

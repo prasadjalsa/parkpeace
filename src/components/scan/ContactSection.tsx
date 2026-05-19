@@ -7,8 +7,23 @@ interface Props {
 
 type State = 'form' | 'loading' | 'success' | 'error'
 
+function buildWhatsAppUrl(phone: string, carName: string, scannerName: string, scannerPhone: string, note: string) {
+  const digits = phone.replace(/\D/g, '')
+  const lines = [
+    `Hi! I scanned your ParkPeace QR code for *${carName}*.`,
+    '',
+    `From: ${scannerName}`,
+    scannerPhone ? `My number: ${scannerPhone}` : '',
+    '',
+    note,
+  ].filter((l, i, arr) => !(l === '' && arr[i - 1] === ''))
+  const text = encodeURIComponent(lines.join('\n'))
+  return `https://wa.me/${digits}?text=${text}`
+}
+
 export function ContactSection({ qrCodeId }: Props) {
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
   const [note, setNote] = useState('')
   const [state, setState] = useState<State>('form')
   const [errorMsg, setErrorMsg] = useState('')
@@ -17,6 +32,10 @@ export function ContactSection({ qrCodeId }: Props) {
     e.preventDefault()
     if (!name.trim() || !note.trim()) return
     setState('loading')
+
+    // Open a blank tab now — browsers only allow window.open from a direct click event.
+    // We'll navigate it to WhatsApp once we get the number back from the server.
+    const waTab = window.open('', '_blank')
 
     try {
       const res = await fetch(
@@ -30,6 +49,7 @@ export function ContactSection({ qrCodeId }: Props) {
           body: JSON.stringify({
             qrCodeId,
             scannerName: name.trim(),
+            scannerPhone: phone.trim() || null,
             note: note.trim(),
             action: 'contact',
           }),
@@ -37,8 +57,24 @@ export function ContactSection({ qrCodeId }: Props) {
       )
 
       if (!res.ok) throw new Error('Failed to send notification')
+      const data = await res.json()
+
+      // Navigate the pre-opened tab to WhatsApp if the owner has a WhatsApp number
+      if (waTab && data.whatsappNumber) {
+        waTab.location.href = buildWhatsAppUrl(
+          data.whatsappNumber,
+          data.carName ?? '',
+          name.trim(),
+          phone.trim(),
+          note.trim(),
+        )
+      } else if (waTab) {
+        waTab.close()
+      }
+
       setState('success')
     } catch {
+      waTab?.close()
       setErrorMsg('Could not reach the owner. Please try again.')
       setState('error')
     }
@@ -49,7 +85,10 @@ export function ContactSection({ qrCodeId }: Props) {
       <div className="text-center py-6">
         <CheckCircle className="w-14 h-14 text-primary-500 mx-auto mb-3" />
         <p className="font-semibold text-gray-900 text-lg">Owner Notified</p>
-        <p className="text-gray-500 text-sm mt-1">The car owner has received your message.</p>
+        <p className="text-gray-500 text-sm mt-1">
+          The car owner has received your message via push notification.
+        </p>
+        <p className="text-gray-400 text-xs mt-1">WhatsApp has been opened if the owner has it set up.</p>
       </div>
     )
   }
@@ -65,6 +104,16 @@ export function ContactSection({ qrCodeId }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+        />
+      </div>
+      <div>
+        <label className="label">Your Number</label>
+        <input
+          type="tel"
+          className="input"
+          placeholder="e.g. +91 98765 43210"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
         />
       </div>
       <div>

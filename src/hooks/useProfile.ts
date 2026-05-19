@@ -5,6 +5,7 @@ export interface Profile {
   id: string
   full_name: string | null
   phone: string
+  whatsapp_number: string | null
   emergency_name: string | null
   emergency_phone: string | null
   emergency_rel: string | null
