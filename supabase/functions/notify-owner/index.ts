@@ -188,7 +188,6 @@ serve(async (req) => {
 
     // Send FCM push notification if the owner has a token
     const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-    console.log("FCM check — has secret:", !!serviceAccountJson, "has token:", !!profile.fcm_token)
     if (serviceAccountJson && profile.fcm_token) {
       try {
         const sa = JSON.parse(serviceAccountJson)

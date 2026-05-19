@@ -109,7 +109,7 @@ export function ProfileForm({ profile, onSave }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Push Notifications</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Get notified when someone scans your QR (via Firebase)</p>
+            <p className="text-xs text-gray-400 mt-0.5">Get notified when someone scans your QR (via Firebase). On iPhone, add this site to your Home Screen first.</p>
           </div>
           {notifStatus === 'enabled' ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 px-3 py-1.5 rounded-full">
