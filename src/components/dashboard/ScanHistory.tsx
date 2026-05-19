@@ -8,7 +8,7 @@ interface ScanEvent {
   scanner_name: string | null
   scanner_note: string | null
   scanned_at: string
-  qr_codes: { name: string }[] | null
+  qr_codes: { name: string } | null
 }
 
 interface Props {
@@ -81,7 +81,7 @@ export function ScanHistory({ userId: _userId }: Props) {
                     {meta.icon} {meta.label}
                   </span>
                   <span className="text-xs font-semibold text-gray-700">
-                    {event.qr_codes?.[0]?.name ?? 'Unknown QR'}
+                    {event.qr_codes?.name ?? 'Unknown QR'}
                   </span>
                 </div>
                 {event.scanner_name && (
