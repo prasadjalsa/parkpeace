@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Save, Bell, BellOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Save, Bell, BellOff, Pencil, X } from 'lucide-react'
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
 
@@ -8,20 +8,53 @@ interface Props {
   onSave: (updates: Partial<Omit<Profile, 'id'>>) => Promise<{ error: { message: string } | null | undefined }>
 }
 
+function Field({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+      <p className="text-sm text-gray-800 font-medium">{value?.trim() || <span className="text-gray-300 font-normal">—</span>}</p>
+    </div>
+  )
+}
+
 export function ProfileForm({ profile, onSave }: Props) {
-  const [fullName, setFullName] = useState(profile?.full_name ?? '')
-  const [phone, setPhone] = useState(profile?.phone ?? '')
-  const [whatsapp, setWhatsapp] = useState(profile?.whatsapp_number ?? '')
-  const [emergencyName, setEmergencyName] = useState(profile?.emergency_name ?? '')
-  const [emergencyPhone, setEmergencyPhone] = useState(profile?.emergency_phone ?? '')
-  const [emergencyRel, setEmergencyRel] = useState(profile?.emergency_rel ?? '')
+  const [editing, setEditing] = useState(false)
+
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
+  const [emergencyName, setEmergencyName] = useState('')
+  const [emergencyPhone, setEmergencyPhone] = useState('')
+  const [emergencyRel, setEmergencyRel] = useState('')
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notifStatus, setNotifStatus] = useState<'idle' | 'enabling' | 'enabled' | 'denied'>(
     typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'enabled' : 'idle'
   )
   const [notifError, setNotifError] = useState<string | null>(null)
+
+  // Sync form fields whenever profile loads or changes
+  useEffect(() => {
+    if (!profile) return
+    setFullName(profile.full_name ?? '')
+    setPhone(profile.phone ?? '')
+    setWhatsapp(profile.whatsapp_number ?? '')
+    setEmergencyName(profile.emergency_name ?? '')
+    setEmergencyPhone(profile.emergency_phone ?? '')
+    setEmergencyRel(profile.emergency_rel ?? '')
+  }, [profile])
+
+  function handleCancel() {
+    // Reset to saved values
+    setFullName(profile?.full_name ?? '')
+    setPhone(profile?.phone ?? '')
+    setWhatsapp(profile?.whatsapp_number ?? '')
+    setEmergencyName(profile?.emergency_name ?? '')
+    setEmergencyPhone(profile?.emergency_phone ?? '')
+    setEmergencyRel(profile?.emergency_rel ?? '')
+    setError(null)
+    setEditing(false)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -38,8 +71,7 @@ export function ProfileForm({ profile, onSave }: Props) {
     })
     setSaving(false)
     if (error) { setError(error.message); return }
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    setEditing(false)
   }
 
   async function handleEnableNotifications() {
@@ -56,68 +88,113 @@ export function ProfileForm({ profile, onSave }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
+      {/* Contact Details */}
       <div className="card">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Your Contact Details</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="label">Full Name</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Priya Sharma"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="label">Your Phone Number <span className="text-red-500">*</span></label>
-            <input
-              type="tel"
-              className="input"
-              placeholder="+91 98765 43210"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-            <p className="text-xs text-gray-400 mt-1">Shown on the call dialer when someone contacts you.</p>
-          </div>
-          <div>
-            <label className="label">WhatsApp Number</label>
-            <input
-              type="tel"
-              className="input"
-              placeholder="+91 98765 43210"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-            />
-            <p className="text-xs text-gray-400 mt-1">When someone contacts you, their WhatsApp will open with a pre-filled message. Your number is never shown to them.</p>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-900">Your Contact Details</h2>
+          {!editing ? (
+            <button
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </button>
+          ) : (
+            <button
+              onClick={handleCancel}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" /> Cancel
+            </button>
+          )}
         </div>
+
+        {!editing ? (
+          <div className="space-y-4">
+            <Field label="Full Name" value={profile?.full_name} />
+            <Field label="Phone Number" value={profile?.phone} />
+            <Field label="WhatsApp Number" value={profile?.whatsapp_number} />
+          </div>
+        ) : (
+          <form id="profile-form" onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="label">Full Name</label>
+              <input type="text" className="input" placeholder="e.g. Priya Sharma"
+                value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Phone Number <span className="text-red-500">*</span></label>
+              <input type="tel" className="input" placeholder="+91 98765 43210"
+                value={phone} onChange={(e) => setPhone(e.target.value)} required />
+              <p className="text-xs text-gray-400 mt-1">Shown on the call dialer when someone contacts you.</p>
+            </div>
+            <div>
+              <label className="label">WhatsApp Number</label>
+              <input type="tel" className="input" placeholder="+91 98765 43210"
+                value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">Scanners will open WhatsApp with a pre-filled message. Your number is never shown to them.</p>
+            </div>
+          </form>
+        )}
       </div>
 
+      {/* Emergency Contact */}
       <div className="card">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">Emergency Contact</h2>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-semibold text-gray-900">Emergency Contact</h2>
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </button>
+          )}
+        </div>
         <p className="text-xs text-gray-400 mb-4">If someone presses Emergency, their phone will call this number.</p>
-        <div className="space-y-4">
-          <div>
-            <label className="label">Contact Name</label>
-            <input type="text" className="input" placeholder="e.g. Rahul Sharma"
-              value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} />
+
+        {!editing ? (
+          <div className="space-y-4">
+            <Field label="Contact Name" value={profile?.emergency_name} />
+            <Field label="Contact Phone" value={profile?.emergency_phone} />
+            <Field label="Relationship" value={profile?.emergency_rel} />
           </div>
-          <div>
-            <label className="label">Contact Phone</label>
-            <input type="tel" className="input" placeholder="+91 91234 56789"
-              value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="label">Contact Name</label>
+              <input type="text" className="input" placeholder="e.g. Rahul Sharma"
+                value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Contact Phone</label>
+              <input type="tel" className="input" placeholder="+91 91234 56789"
+                value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Relationship</label>
+              <input type="text" className="input" placeholder="e.g. Spouse, Parent, Friend"
+                value={emergencyRel} onChange={(e) => setEmergencyRel(e.target.value)} />
+            </div>
           </div>
-          <div>
-            <label className="label">Relationship</label>
-            <input type="text" className="input" placeholder="e.g. Spouse, Parent, Friend"
-              value={emergencyRel} onChange={(e) => setEmergencyRel(e.target.value)} />
-          </div>
-        </div>
+        )}
       </div>
 
+      {/* Save button — only in edit mode */}
+      {editing && (
+        <>
+          {error && (
+            <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-700 border border-red-200">{error}</div>
+          )}
+          <button type="submit" form="profile-form" disabled={saving} className="btn-primary w-full">
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving…' : 'Save Profile'}
+          </button>
+        </>
+      )}
+
+      {/* Push Notifications — always visible */}
       <div className="card">
         <div className="flex items-center justify-between">
           <div>
@@ -153,15 +230,6 @@ export function ProfileForm({ profile, onSave }: Props) {
           <p className="text-xs text-red-500 mt-2 break-all">{notifError}</p>
         )}
       </div>
-
-      {error && (
-        <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-700 border border-red-200">{error}</div>
-      )}
-
-      <button type="submit" disabled={saving} className="btn-primary w-full">
-        <Save className="w-4 h-4" />
-        {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Profile'}
-      </button>
-    </form>
+    </div>
   )
 }
