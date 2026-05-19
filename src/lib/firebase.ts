@@ -15,18 +15,20 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 // getMessaging() is only valid in browser context
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null
 
-export async function requestFCMToken(): Promise<string | null> {
-  if (!messaging) return null
+export async function requestFCMToken(): Promise<{ token: string } | { error: string }> {
+  if (!messaging) return { error: 'Firebase Messaging not available in this browser.' }
   try {
-    // Explicitly register the service worker so FCM can find it
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
       serviceWorkerRegistration: registration,
     })
-    return token || null
-  } catch {
-    return null
+    if (!token) return { error: 'No token returned — check VAPID key and notification permission.' }
+    return { token }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('FCM token error:', err)
+    return { error: msg }
   }
 }
 

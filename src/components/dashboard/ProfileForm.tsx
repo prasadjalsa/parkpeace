@@ -20,6 +20,7 @@ export function ProfileForm({ profile, onSave }: Props) {
   const [notifStatus, setNotifStatus] = useState<'idle' | 'enabling' | 'enabled' | 'denied'>(
     'Notification' in window && Notification.permission === 'granted' ? 'enabled' : 'idle'
   )
+  const [notifError, setNotifError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,12 +42,13 @@ export function ProfileForm({ profile, onSave }: Props) {
 
   async function handleEnableNotifications() {
     setNotifStatus('enabling')
-    const token = await requestFCMToken()
-    if (token) {
-      // Save FCM token to profile
-      await onSave({ fcm_token: token })
+    setNotifError(null)
+    const result = await requestFCMToken()
+    if ('token' in result) {
+      await onSave({ fcm_token: result.token })
       setNotifStatus('enabled')
     } else {
+      setNotifError(result.error)
       setNotifStatus(Notification.permission === 'denied' ? 'denied' : 'idle')
     }
   }
@@ -133,6 +135,9 @@ export function ProfileForm({ profile, onSave }: Props) {
           <p className="text-xs text-red-500 mt-2">
             Notifications are blocked. Allow them in your browser settings and reload.
           </p>
+        )}
+        {notifError && (
+          <p className="text-xs text-red-500 mt-2 break-all">{notifError}</p>
         )}
       </div>
 
