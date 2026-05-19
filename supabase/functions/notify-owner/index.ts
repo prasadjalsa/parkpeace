@@ -150,10 +150,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
 
-    // Fetch QR code + owner profile
+    // Fetch QR code
     const { data: qrCode, error: qrError } = await supabase
       .from("qr_codes")
-      .select("id, name, user_id, profiles(id, full_name, phone, emergency_name, emergency_phone, fcm_token)")
+      .select("id, name, user_id")
       .eq("id", qrCodeId)
       .single()
 
@@ -164,13 +164,18 @@ serve(async (req) => {
       })
     }
 
-    const profile = qrCode.profiles as {
-      id: string
-      full_name: string | null
-      phone: string
-      emergency_name: string | null
-      emergency_phone: string | null
-      fcm_token: string | null
+    // Fetch owner profile separately (no direct FK from qr_codes to profiles)
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, full_name, phone, emergency_name, emergency_phone, fcm_token")
+      .eq("id", qrCode.user_id)
+      .single()
+
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ error: "Owner profile not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
     }
 
     // Build notification content
