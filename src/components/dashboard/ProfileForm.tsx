@@ -18,7 +18,7 @@ export function ProfileForm({ profile, onSave }: Props) {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notifStatus, setNotifStatus] = useState<'idle' | 'enabling' | 'enabled' | 'denied'>(
-    'Notification' in window && Notification.permission === 'granted' ? 'enabled' : 'idle'
+    typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'enabled' : 'idle'
   )
   const [notifError, setNotifError] = useState<string | null>(null)
 
@@ -49,7 +49,7 @@ export function ProfileForm({ profile, onSave }: Props) {
       setNotifStatus('enabled')
     } else {
       setNotifError(result.error)
-      setNotifStatus(Notification.permission === 'denied' ? 'denied' : 'idle')
+      setNotifStatus(typeof Notification !== 'undefined' && Notification.permission === 'denied' ? 'denied' : 'idle')
     }
   }
 
