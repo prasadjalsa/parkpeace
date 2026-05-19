@@ -78,7 +78,7 @@ export function ScanPage() {
               <p className="text-xs text-gray-400">Send a message to the car owner</p>
             </div>
           </div>
-          <ContactSection qrCodeId={qr!.id} carName={qr!.name} />
+          <ContactSection qrCodeId={qr!.id} />
         </div>
 
         {/* Emergency — collapsible */}
@@ -98,7 +98,7 @@ export function ScanPage() {
           </button>
           {emergencyOpen && (
             <div className="p-5 bg-white">
-              <EmergencySection qrCodeId={qr!.id} carName={qr!.name} />
+              <EmergencySection qrCodeId={qr!.id} />
             </div>
           )}
         </div>

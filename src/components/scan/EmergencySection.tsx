@@ -3,12 +3,11 @@ import { AlertTriangle, Phone, Loader2 } from 'lucide-react'
 
 interface Props {
   qrCodeId: string
-  carName: string
 }
 
 type State = 'form' | 'loading' | 'calling' | 'error'
 
-export function EmergencySection({ qrCodeId, carName }: Props) {
+export function EmergencySection({ qrCodeId }: Props) {
   const [name, setName] = useState('')
   const [situation, setSituation] = useState('')
   const [state, setState] = useState<State>('form')

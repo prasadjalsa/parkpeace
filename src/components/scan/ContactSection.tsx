@@ -1,15 +1,13 @@
 import { useState } from 'react'
 import { MessageSquare, CheckCircle, Loader2 } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
 
 interface Props {
   qrCodeId: string
-  carName: string
 }
 
 type State = 'form' | 'loading' | 'success' | 'error'
 
-export function ContactSection({ qrCodeId, carName }: Props) {
+export function ContactSection({ qrCodeId }: Props) {
   const [name, setName] = useState('')
   const [note, setNote] = useState('')
   const [state, setState] = useState<State>('form')
