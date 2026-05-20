@@ -58,7 +58,9 @@ export function ProfileForm({ profile, onSave }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const digits = phone.replace(/\D/g, '')
     if (!phone.trim()) { setError('Your phone number is required.'); return }
+    if (digits.length !== 10) { setError('Phone number must be exactly 10 digits.'); return }
     setSaving(true)
     setError(null)
     const { error } = await onSave({
@@ -125,9 +127,9 @@ export function ProfileForm({ profile, onSave }: Props) {
             </div>
             <div>
               <label className="label">Phone Number <span className="text-red-500">*</span></label>
-              <input type="tel" className="input" placeholder="+91 98765 43210"
+              <input type="tel" className="input" placeholder="10-digit number e.g. 9876543210"
                 value={phone} onChange={(e) => setPhone(e.target.value)} required />
-              <p className="text-xs text-gray-400 mt-1">Shown on the call dialer when someone contacts you.</p>
+              <p className="text-xs text-gray-400 mt-1">Must be 10 digits. Shown on the call dialer when someone contacts you.</p>
             </div>
             <div>
               <label className="label">WhatsApp Number</label>
