@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Car, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { ContactSection } from '../components/scan/ContactSection'
 import { EmergencySection } from '../components/scan/EmergencySection'
@@ -43,7 +43,7 @@ export function ScanPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center max-w-xs">
-          <Car className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <img src="/favicon.png" alt="ParkPeace" className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p className="font-semibold text-gray-700">QR Code Not Found</p>
           <p className="text-gray-400 text-sm mt-1">
             This QR code may have been removed. Please leave a note on the car.
@@ -58,8 +58,8 @@ export function ScanPage() {
       {/* Header */}
       <div className="bg-primary-600 text-white px-4 pt-10 pb-8">
         <div className="max-w-md mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-2xl mb-3">
-            <Car className="w-7 h-7" />
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-2xl mb-3 overflow-hidden">
+            <img src="/favicon.png" alt="ParkPeace" className="w-10 h-10 object-cover" />
           </div>
           <p className="text-primary-100 text-sm mb-1">You scanned a ParkPeace QR code</p>
           <h1 className="text-2xl font-bold">{qr!.name}</h1>
@@ -70,8 +70,8 @@ export function ScanPage() {
         {/* Contact Owner */}
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
-              <Car className="w-4 h-4 text-primary-600" />
+            <div className="w-8 h-8 bg-primary-50 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/favicon.png" alt="ParkPeace" className="w-6 h-6 object-cover" />
             </div>
             <div>
               <h2 className="font-semibold text-gray-900 text-sm">Contact Owner</h2>

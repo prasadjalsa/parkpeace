@@ -31,6 +31,9 @@ export function ContactSection({ qrCodeId }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !note.trim()) return
+    const digits = phone.replace(/\D/g, '')
+    if (!phone.trim()) { return }
+    if (digits.length !== 10) { setState('error'); setErrorMsg('Your number must be exactly 10 digits.'); return }
     setState('loading')
 
     // Open a blank tab now — browsers only allow window.open from a direct click event.
@@ -107,13 +110,14 @@ export function ContactSection({ qrCodeId }: Props) {
         />
       </div>
       <div>
-        <label className="label">Your Number</label>
+        <label className="label">Your Number <span className="text-red-500">*</span></label>
         <input
           type="tel"
           className="input"
-          placeholder="e.g. +91 98765 43210"
+          placeholder="10-digit number e.g. 9876543210"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          required
         />
       </div>
       <div>
@@ -136,7 +140,7 @@ export function ContactSection({ qrCodeId }: Props) {
 
       <button
         type="submit"
-        disabled={state === 'loading' || !name.trim() || !note.trim()}
+        disabled={state === 'loading' || !name.trim() || !phone.trim() || !note.trim()}
         className="btn-primary w-full"
       >
         {state === 'loading' ? (
