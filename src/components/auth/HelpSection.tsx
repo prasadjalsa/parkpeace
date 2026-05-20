@@ -127,7 +127,9 @@ function SectionContent({ id }: { id: Section }) {
               <li>WhatsApp number returned by Edge Function only after notification is sent</li>
               <li>Emergency uses scanner's own phone to dial (free — no Twilio)</li>
               <li>Firebase service worker generated at build time from env vars (no API keys in git)</li>
-              <li>RLS policies ensure owners only see and delete their own data</li>
+              <li>FCM JWT signing done in Edge Function using RSA/RS256 — no third-party auth library needed</li>
+              <li>Foreground push messages handled in main thread; background via service worker</li>
+              <li>RLS policies ensure owners can only read and delete their own data</li>
               <li>GitHub Actions deploys Edge Functions — no local Supabase CLI needed</li>
             </ul>
           </div>

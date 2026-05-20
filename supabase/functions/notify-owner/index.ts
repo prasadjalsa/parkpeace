@@ -8,13 +8,6 @@ const corsHeaders = {
 
 // ── FCM v1 helpers ────────────────────────────────────────────────────────────
 
-// Convert base64url to base64
-function base64urlToBase64(str: string): string {
-  return str.replace(/-/g, "+").replace(/_/g, "/").padEnd(
-    str.length + (4 - (str.length % 4)) % 4, "=",
-  )
-}
-
 // Encode object to base64url (for JWT parts)
 function toBase64url(obj: unknown): string {
   const json = JSON.stringify(obj)
@@ -30,17 +23,10 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
     .replace("-----BEGIN PRIVATE KEY-----", "")
     .replace("-----END PRIVATE KEY-----", "")
     .replace(/\s/g, "")
-  const binaryDer = atob(base64urlToBase64(pemBody.replace(/\+/g, "-").replace(/\//g, "_")))
-  // Use standard atob since the PEM is standard base64
-  const binaryDerStd = atob(
-    pem
-      .replace("-----BEGIN PRIVATE KEY-----", "")
-      .replace("-----END PRIVATE KEY-----", "")
-      .replace(/\s/g, ""),
-  )
-  const buffer = new Uint8Array(binaryDerStd.length)
-  for (let i = 0; i < binaryDerStd.length; i++) {
-    buffer[i] = binaryDerStd.charCodeAt(i)
+  const binary = atob(pemBody)
+  const buffer = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    buffer[i] = binary.charCodeAt(i)
   }
   return crypto.subtle.importKey(
     "pkcs8",
@@ -215,8 +201,8 @@ serve(async (req) => {
     if (action === "emergency" && profile.emergency_phone) {
       response.emergencyPhone = profile.emergency_phone
     }
-    if (action === "contact" && (profile as Record<string, unknown>).whatsapp_number) {
-      response.whatsappNumber = (profile as Record<string, unknown>).whatsapp_number
+    if (action === "contact" && profile.whatsapp_number) {
+      response.whatsappNumber = profile.whatsapp_number
       response.carName = qrCode.name
     }
 

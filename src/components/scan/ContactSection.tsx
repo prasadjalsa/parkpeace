@@ -32,7 +32,6 @@ export function ContactSection({ qrCodeId }: Props) {
     e.preventDefault()
     if (!name.trim() || !note.trim()) return
     const digits = phone.replace(/\D/g, '')
-    if (!phone.trim()) { return }
     if (digits.length !== 10) { setState('error'); setErrorMsg('Your number must be exactly 10 digits.'); return }
     setState('loading')
 

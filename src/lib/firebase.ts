@@ -1,6 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
-
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -40,5 +39,3 @@ export function initForegroundMessaging() {
     window.dispatchEvent(new Event('parkpeace:new-scan'))
   })
 }
-
-export { onMessage }
