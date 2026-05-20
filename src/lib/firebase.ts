@@ -12,7 +12,6 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
-// getMessaging() is only valid in browser context
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null
 
 export async function requestFCMToken(): Promise<{ token: string } | { error: string }> {
@@ -30,6 +29,16 @@ export async function requestFCMToken(): Promise<{ token: string } | { error: st
     console.error('FCM token error:', err)
     return { error: msg }
   }
+}
+
+// Called once from DashboardPage to handle foreground push messages.
+// Sets the app icon badge and dispatches a custom event so the unread count updates.
+export function initForegroundMessaging() {
+  if (!messaging) return
+  onMessage(messaging, () => {
+    navigator.setAppBadge?.(1)
+    window.dispatchEvent(new Event('parkpeace:new-scan'))
+  })
 }
 
 export { onMessage }

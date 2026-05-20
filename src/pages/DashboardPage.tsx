@@ -4,6 +4,7 @@ import { LogOut, QrCode, Clock } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
+import { initForegroundMessaging } from '../lib/firebase'
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
 import { HelpButton } from '../components/auth/HelpSection'
@@ -29,6 +30,14 @@ export function DashboardPage() {
       .gt('scanned_at', lastSeen)
       .then(({ count }) => setUnreadCount(count ?? 0))
   }, [user?.id])
+
+  // Handle foreground FCM messages — increment unread badge in real time
+  useEffect(() => {
+    initForegroundMessaging()
+    function onNewScan() { setUnreadCount((n) => n + 1) }
+    window.addEventListener('parkpeace:new-scan', onNewScan)
+    return () => window.removeEventListener('parkpeace:new-scan', onNewScan)
+  }, [])
 
   // Clear badge when app is foregrounded
   useEffect(() => {

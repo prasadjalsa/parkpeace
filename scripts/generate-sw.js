@@ -42,10 +42,15 @@ messaging.onBackgroundMessage((payload) => {
     icon: '/favicon.png',
     badge: '/favicon.png',
   })
-  // Increment the app icon badge count
-  if (self.navigator?.setAppBadge) {
-    self.navigator.setAppBadge()
-  }
+
+  // Set app icon badge — try both forms for iOS PWA compatibility
+  try {
+    if (navigator.setAppBadge) {
+      navigator.setAppBadge(1)
+    } else if (self.navigator?.setAppBadge) {
+      self.navigator.setAppBadge(1)
+    }
+  } catch (_) {}
 })
 `
 
