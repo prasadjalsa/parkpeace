@@ -39,9 +39,13 @@ messaging.onBackgroundMessage((payload) => {
   const body = payload.notification?.body ?? ''
   self.registration.showNotification(title, {
     body,
-    icon: '/car-icon.svg',
-    badge: '/car-icon.svg',
+    icon: '/favicon.png',
+    badge: '/favicon.png',
   })
+  // Increment the app icon badge count
+  if (self.navigator?.setAppBadge) {
+    self.navigator.setAppBadge()
+  }
 })
 `
 
