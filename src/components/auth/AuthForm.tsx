@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Car } from 'lucide-react'
 import { HelpSection } from './HelpSection'
 
 type Tab = 'login' | 'register'
@@ -36,8 +35,8 @@ export function AuthForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-white px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl mb-4 shadow-lg">
-            <Car className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg overflow-hidden">
+            <img src="/favicon.png" alt="ParkPeace" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">ParkPeace</h1>
           <p className="text-gray-500 mt-1 text-sm">Smart QR alerts for your parked car</p>

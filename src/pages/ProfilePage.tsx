@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Car, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { ProfileForm } from '../components/dashboard/ProfileForm'
@@ -26,8 +26,8 @@ export function ProfilePage() {
               Back
             </button>
             <div className="flex items-center gap-2 ml-1">
-              <div className="w-7 h-7 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Car className="w-3.5 h-3.5 text-white" />
+              <div className="w-7 h-7 rounded-lg overflow-hidden">
+                <img src="/favicon.png" alt="ParkPeace" className="w-full h-full object-cover" />
               </div>
               <span className="font-bold text-gray-900">Profile</span>
             </div>

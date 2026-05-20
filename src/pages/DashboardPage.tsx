@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Car, LogOut, QrCode, Clock } from 'lucide-react'
+import { LogOut, QrCode, Clock } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
@@ -62,8 +62,8 @@ export function DashboardPage() {
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <Car className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden">
+              <img src="/favicon.png" alt="ParkPeace" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-gray-900">ParkPeace</span>
           </div>
