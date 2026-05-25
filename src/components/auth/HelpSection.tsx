@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone } from 'lucide-react'
 
-type Section = 'howto' | 'register' | 'notifications' | 'faq' | 'buildplan'
+type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'buildplan'
 
 const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'howto', label: 'How to Use', icon: <BookOpen className="w-4 h-4" /> },
   { id: 'register', label: 'How to Register', icon: <UserPlus className="w-4 h-4" /> },
   { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
+  { id: 'homescreen', label: 'Add to Home Screen', icon: <Smartphone className="w-4 h-4" /> },
   { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
   { id: 'buildplan', label: 'Build Plan', icon: <Layers className="w-4 h-4" /> },
 ]
@@ -44,15 +45,79 @@ function SectionContent({ id }: { id: Section }) {
       )
     case 'notifications':
       return (
-        <div className="space-y-3 text-sm text-gray-600">
-          <p>ParkPeace uses Firebase Cloud Messaging (FCM) to send push notifications to your browser or device.</p>
-          <p><strong>1.</strong> Sign in and tap your name (top right) to open Profile.</p>
-          <p><strong>2.</strong> In the <strong>Push Notifications</strong> section, tap <strong>Enable</strong>.</p>
-          <p><strong>3.</strong> When your browser asks for permission, click <strong>Allow</strong>.</p>
-          <p><strong>4.</strong> The button turns green — notifications are active on this device.</p>
-          <p className="text-xs text-gray-400">Note: Each device needs to enable notifications separately. Notifications are tied to the browser and device you use.</p>
-          <p className="text-amber-700 bg-amber-50 rounded-lg p-2 text-xs"><strong>iPhone:</strong> Notifications require Safari iOS 16.4+ and the site must be added to your Home Screen. Open in Safari → Share → Add to Home Screen → then enable notifications from the app.</p>
-          <p className="text-xs text-gray-500"><strong>Troubleshooting:</strong> On Mac, check System Settings → Notifications → Google Chrome → Allow Notifications. Make sure Focus / Do Not Disturb is off.</p>
+        <div className="space-y-4 text-sm text-gray-600">
+          <p>ParkPeace uses Firebase Cloud Messaging (FCM) to deliver instant push notifications to your device.</p>
+
+          <div>
+            <p className="font-semibold text-gray-800 mb-1">Steps (all devices)</p>
+            <p><strong>1.</strong> Sign in and tap your name (top right) to open Profile.</p>
+            <p><strong>2.</strong> In the <strong>Push Notifications</strong> section, tap <strong>Enable</strong>.</p>
+            <p><strong>3.</strong> When the browser asks for permission, tap <strong>Allow</strong>.</p>
+            <p><strong>4.</strong> The button turns green — notifications are active on this device.</p>
+            <p className="text-xs text-gray-400 mt-1">Each device must enable notifications separately. The token is tied to the browser and device.</p>
+          </div>
+
+          <div className="bg-blue-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-blue-800 text-xs">Android (Chrome / Samsung Browser)</p>
+            <p className="text-xs text-blue-700">Works directly in the browser — no extra setup needed. Tap Enable in Profile and allow when prompted. Notifications arrive even when the browser is in the background.</p>
+            <p className="text-xs text-blue-600 mt-1">For the best experience, also add the app to your Home Screen (see the Add to Home Screen tab).</p>
+          </div>
+
+          <div className="bg-amber-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-amber-800 text-xs">iPhone / iPad (iOS)</p>
+            <p className="text-xs text-amber-700">Requires iOS 16.4+ and the app must be added to your Home Screen first:</p>
+            <p className="text-xs text-amber-700"><strong>1.</strong> Open the site in <strong>Safari</strong> (not Chrome).</p>
+            <p className="text-xs text-amber-700"><strong>2.</strong> Tap the Share button → <strong>Add to Home Screen</strong>.</p>
+            <p className="text-xs text-amber-700"><strong>3.</strong> Open the app from your Home Screen.</p>
+            <p className="text-xs text-amber-700"><strong>4.</strong> Go to Profile → tap <strong>Enable</strong> notifications.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-gray-700 text-xs">Mac / Windows (Chrome or Edge)</p>
+            <p className="text-xs text-gray-600">Works in the browser. If notifications don't appear after enabling:</p>
+            <p className="text-xs text-gray-600">• <strong>Mac:</strong> System Settings → Notifications → Google Chrome → Allow</p>
+            <p className="text-xs text-gray-600">• <strong>Windows:</strong> Settings → System → Notifications → Chrome → On</p>
+            <p className="text-xs text-gray-600">• Make sure Focus / Do Not Disturb mode is off.</p>
+          </div>
+        </div>
+      )
+    case 'homescreen':
+      return (
+        <div className="space-y-4 text-sm text-gray-600">
+          <p>Adding ParkPeace to your Home Screen makes it behave like a native app — full screen, no browser bars, faster to open, and required for notifications on iPhone.</p>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+            <p className="font-semibold text-gray-800 text-xs uppercase tracking-wide">iPhone / iPad — Safari</p>
+            <p className="text-xs text-gray-600"><strong>1.</strong> Open the site in <strong>Safari</strong> (must be Safari, not Chrome).</p>
+            <p className="text-xs text-gray-600"><strong>2.</strong> Tap the <strong>Share</strong> icon at the bottom of the screen (box with an arrow pointing up).</p>
+            <p className="text-xs text-gray-600"><strong>3.</strong> Scroll down and tap <strong>Add to Home Screen</strong>.</p>
+            <p className="text-xs text-gray-600"><strong>4.</strong> Tap <strong>Add</strong> in the top right — the ParkPeace icon appears on your Home Screen.</p>
+            <p className="text-xs text-gray-600"><strong>5.</strong> Open it from there and enable notifications in Profile.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+            <p className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Android — Chrome</p>
+            <p className="text-xs text-gray-600"><strong>1.</strong> Open the site in <strong>Chrome</strong>.</p>
+            <p className="text-xs text-gray-600"><strong>2.</strong> Tap the <strong>⋮ menu</strong> (three dots, top right).</p>
+            <p className="text-xs text-gray-600"><strong>3.</strong> Tap <strong>Add to Home screen</strong> or <strong>Install app</strong>.</p>
+            <p className="text-xs text-gray-600"><strong>4.</strong> Tap <strong>Add</strong> — the icon appears on your Home Screen.</p>
+            <p className="text-xs text-gray-600">Alternatively, Chrome may show an <strong>Install</strong> banner or icon in the address bar — tap it.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+            <p className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Android — Samsung Internet</p>
+            <p className="text-xs text-gray-600"><strong>1.</strong> Open the site in Samsung Internet.</p>
+            <p className="text-xs text-gray-600"><strong>2.</strong> Tap the <strong>☰ menu</strong> (bottom right).</p>
+            <p className="text-xs text-gray-600"><strong>3.</strong> Tap <strong>Add page to</strong> → <strong>Home screen</strong>.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+            <p className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Desktop — Chrome or Edge</p>
+            <p className="text-xs text-gray-600"><strong>1.</strong> Look for an <strong>Install</strong> icon (⊕) in the address bar on the right.</p>
+            <p className="text-xs text-gray-600"><strong>2.</strong> Click it and confirm <strong>Install</strong>.</p>
+            <p className="text-xs text-gray-600">Or: Click <strong>⋮ menu</strong> → <strong>Save and share</strong> → <strong>Install page as app</strong>.</p>
+            <p className="text-xs text-gray-600">The app opens in its own window without browser toolbars.</p>
+          </div>
         </div>
       )
     case 'faq':
