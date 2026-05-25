@@ -1,20 +1,70 @@
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { HelpSection } from './HelpSection'
 
 type Tab = 'login' | 'register'
 
+function PasswordInput({
+  value,
+  onChange,
+  placeholder = '••••••••',
+  minLength,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  minLength?: number
+}) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <div className="relative">
+      <input
+        type={visible ? 'text' : 'password'}
+        className="input pr-10"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required
+        minLength={minLength}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+        tabIndex={-1}
+        aria-label={visible ? 'Hide password' : 'Show password'}
+      >
+        {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  )
+}
+
 export function AuthForm() {
   const [tab, setTab] = useState<Tab>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
+  function switchTab(t: Tab) {
+    setTab(t)
+    setMessage(null)
+    setConfirm('')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setMessage(null)
+
+    if (tab === 'register' && password !== confirm) {
+      setMessage({ type: 'error', text: 'Passwords do not match.' })
+      return
+    }
+
+    setLoading(true)
 
     if (tab === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -26,6 +76,7 @@ export function AuthForm() {
       } else {
         setMessage({ type: 'success', text: 'Account created! You can now log in.' })
         setTab('login')
+        setConfirm('')
       }
     }
     setLoading(false)
@@ -48,7 +99,7 @@ export function AuthForm() {
             {(['login', 'register'] as Tab[]).map((t) => (
               <button
                 key={t}
-                onClick={() => { setTab(t); setMessage(null) }}
+                onClick={() => switchTab(t)}
                 className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
                   tab === t
                     ? 'bg-white text-primary-700 shadow-sm'
@@ -74,16 +125,25 @@ export function AuthForm() {
             </div>
             <div>
               <label className="label">Password</label>
-              <input
-                type="password"
-                className="input"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
+              <PasswordInput value={password} onChange={setPassword} minLength={6} />
             </div>
+
+            {tab === 'register' && (
+              <div>
+                <label className="label">Confirm Password</label>
+                <PasswordInput
+                  value={confirm}
+                  onChange={setConfirm}
+                  placeholder="••••••••"
+                />
+                {confirm && password !== confirm && (
+                  <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+                )}
+                {confirm && password === confirm && (
+                  <p className="text-xs text-primary-600 mt-1">Passwords match ✓</p>
+                )}
+              </div>
+            )}
 
             {message && (
               <div className={`rounded-lg px-4 py-3 text-sm ${
@@ -95,7 +155,11 @@ export function AuthForm() {
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="btn-primary w-full">
+            <button
+              type="submit"
+              disabled={loading || (tab === 'register' && (password !== confirm || !confirm))}
+              className="btn-primary w-full"
+            >
               {loading ? 'Please wait…' : tab === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>

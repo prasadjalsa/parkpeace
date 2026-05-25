@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { LogOut, QrCode, Clock } from 'lucide-react'
+import { LogOut, QrCode, Clock, UserCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
@@ -79,9 +79,10 @@ export function DashboardPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/profile')}
-              className="text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors truncate max-w-[160px]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 border border-primary-200 text-primary-700 text-xs font-medium transition-colors truncate max-w-[160px]"
             >
-              {displayName}
+              <UserCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{displayName}</span>
             </button>
             <HelpButton />
             <button

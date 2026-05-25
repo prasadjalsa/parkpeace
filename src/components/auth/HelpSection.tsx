@@ -18,7 +18,7 @@ function SectionContent({ id }: { id: Section }) {
       return (
         <div className="space-y-3 text-sm text-gray-600">
           <p><strong>1. Register</strong> — Create a free account with your email and password on the sign-in page.</p>
-          <p><strong>2. Set up your profile</strong> — Tap your name in the top-right corner of the dashboard to open Profile. Add your full name, phone number, WhatsApp number, and emergency contact. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
+          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Add your full name, phone number, WhatsApp number, and emergency contact. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR.</p>
           <p><strong>4. Add a vehicle</strong> — Go to the <strong>My Vehicles</strong> tab and tap <strong>Add Vehicle</strong>. Give it a name (e.g. "Red Swift"). A QR code is generated automatically.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
@@ -30,17 +30,18 @@ function SectionContent({ id }: { id: Section }) {
       return (
         <div className="space-y-3 text-sm text-gray-600">
           <p><strong>1.</strong> On the sign-in page, click the <strong>Register</strong> tab.</p>
-          <p><strong>2.</strong> Enter your email address and choose a password (min. 6 characters).</p>
-          <p><strong>3.</strong> Click <strong>Create Account</strong>. You'll be switched to Sign In automatically.</p>
-          <p><strong>4.</strong> Sign in with the same email and password.</p>
-          <p><strong>5.</strong> Tap your name in the top-right header to open Profile. Click <strong>Edit</strong> and fill in:</p>
+          <p><strong>2.</strong> Enter your email address and choose a password (min. 6 characters). Tap the eye icon to show or hide it.</p>
+          <p><strong>3.</strong> Re-enter the same password in the <strong>Confirm Password</strong> field — a green "Passwords match ✓" indicator confirms they are identical. The Create Account button stays disabled until they match.</p>
+          <p><strong>4.</strong> Click <strong>Create Account</strong>. You'll be switched to Sign In automatically.</p>
+          <p><strong>5.</strong> Sign in with the same email and password.</p>
+          <p><strong>6.</strong> Tap the <strong>profile button</strong> (your name, top-right) to open Profile. Click <strong>Edit</strong> and fill in:</p>
           <ul className="list-disc list-inside ml-3 space-y-1">
             <li>Full Name</li>
             <li>Phone Number (required)</li>
             <li>WhatsApp Number (optional — lets scanners message you via WhatsApp)</li>
             <li>Emergency Contact name, phone, and relationship</li>
           </ul>
-          <p><strong>6.</strong> Click <strong>Save Profile</strong>, then enable push notifications.</p>
+          <p><strong>7.</strong> Click <strong>Save Profile</strong>, then enable push notifications.</p>
         </div>
       )
     case 'notifications':
@@ -176,6 +177,9 @@ function SectionContent({ id }: { id: Section }) {
             <ul className="list-disc list-inside space-y-1 ml-1">
               <li>Owner dashboard: profile, multiple vehicles, scan history</li>
               <li>Profile view/edit mode — shows saved values, edit button to modify</li>
+              <li>Profile accessible via a styled clickable button (name + icon) in the header</li>
+              <li>Register: confirm password field with live match indicator; eye icon to show/hide password</li>
+              <li>Unread scan badge on Scan History tab + app icon badge via Web Badge API</li>
               <li>WhatsApp integration — scanner's WhatsApp opens with pre-filled message</li>
               <li>Scanner page: contact form with name, phone, message</li>
               <li>Emergency flow: push alert to owner + scanner's phone dials emergency contact</li>
