@@ -65,12 +65,78 @@ export function QRCodeManager({ userId }: Props) {
   }
 
   function downloadQR(id: string, name: string) {
-    const canvas = document.getElementById(`qr-${id}`) as HTMLCanvasElement
-    if (!canvas) return
-    const pngUrl = canvas.toDataURL('image/png')
+    const qrCanvas = document.getElementById(`qr-${id}`) as HTMLCanvasElement
+    if (!qrCanvas) return
+
+    // Card dimensions
+    const W = 400
+    const headerH = 72
+    const qrSize = 260
+    const qrPad = 30        // space above and below QR inside card
+    const footerH = 110
+    const H = headerH + qrPad + qrSize + qrPad + footerH
+
+    const card = document.createElement('canvas')
+    card.width = W
+    card.height = H
+    const ctx = card.getContext('2d')!
+
+    // White background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
+
+    // Green header
+    ctx.fillStyle = '#16a34a'
+    ctx.fillRect(0, 0, W, headerH)
+
+    // Header label — "ParkPeace"
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 22px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('ParkPeace', W / 2, headerH / 2)
+
+    // QR code — drawn at qrSize × qrSize (upscaled from the 160px canvas for print quality)
+    const qrX = (W - qrSize) / 2
+    const qrY = headerH + qrPad
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
+
+    // Light divider line below QR
+    ctx.strokeStyle = '#e5e7eb'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(32, qrY + qrSize + qrPad - 2)
+    ctx.lineTo(W - 32, qrY + qrSize + qrPad - 2)
+    ctx.stroke()
+
+    // Vehicle name
+    const footerTop = headerH + qrPad + qrSize + qrPad + 14
+    ctx.fillStyle = '#111827'
+    ctx.font = 'bold 17px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'alphabetic'
+    ctx.fillText(name, W / 2, footerTop)
+
+    // Instruction line 1
+    ctx.fillStyle = '#4b5563'
+    ctx.font = '13px system-ui, sans-serif'
+    ctx.fillText('Scan to contact the car owner', W / 2, footerTop + 26)
+
+    // Instruction line 2
+    ctx.fillStyle = '#9ca3af'
+    ctx.font = '12px system-ui, sans-serif'
+    ctx.fillText('if my car is causing any issues', W / 2, footerTop + 46)
+
+    // Bottom branding
+    ctx.fillStyle = '#d1fae5'
+    ctx.fillRect(0, H - 26, W, 26)
+    ctx.fillStyle = '#16a34a'
+    ctx.font = '11px system-ui, sans-serif'
+    ctx.fillText('Powered by ParkPeace', W / 2, H - 10)
+
     const link = document.createElement('a')
     link.download = `${name.replace(/\s+/g, '-')}-parkpeace-qr.png`
-    link.href = pngUrl
+    link.href = card.toDataURL('image/png')
     link.click()
   }
 
