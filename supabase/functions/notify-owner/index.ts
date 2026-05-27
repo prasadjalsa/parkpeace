@@ -1,15 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const ALLOWED_ORIGIN = Deno.env.get("APP_ORIGIN") ?? ""
-
-function corsHeaders(requestOrigin: string | null): Record<string, string> {
-  // Allow the configured origin exactly. Fall back to the request origin in dev (no APP_ORIGIN set).
-  const origin = ALLOWED_ORIGIN || requestOrigin || "*"
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  }
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
 // ── FCM v1 helpers ────────────────────────────────────────────────────────────
@@ -113,11 +107,8 @@ async function sendFCMPush(
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 serve(async (req) => {
-  const origin = req.headers.get("origin")
-  const cors = corsHeaders(origin)
-
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: cors })
+    return new Response("ok", { headers: corsHeaders })
   }
 
   try {
@@ -132,7 +123,7 @@ serve(async (req) => {
     if (!qrCodeId || !scannerName || !action) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
-        headers: { ...cors, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
@@ -140,7 +131,7 @@ serve(async (req) => {
     if (scannerName.length > 100 || (note && note.length > 1000) || (scannerPhone && scannerPhone.length > 20)) {
       return new Response(JSON.stringify({ error: "Input too long" }), {
         status: 400,
-        headers: { ...cors, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
@@ -160,7 +151,7 @@ serve(async (req) => {
     if (qrError || !qrCode) {
       return new Response(JSON.stringify({ error: "QR code not found" }), {
         status: 404,
-        headers: { ...cors, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
@@ -174,7 +165,7 @@ serve(async (req) => {
     if (profileError || !profile) {
       return new Response(JSON.stringify({ error: "Owner profile not found" }), {
         status: 404,
-        headers: { ...cors, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
@@ -250,13 +241,13 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify(response), {
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 })
