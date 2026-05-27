@@ -37,10 +37,13 @@ const messaging = firebase.messaging()
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title ?? 'ParkPeace Alert'
   const body = payload.notification?.body ?? ''
+  const chatUrl = payload.data?.chatUrl ?? null
+
   self.registration.showNotification(title, {
     body,
     icon: '/favicon.png',
     badge: '/favicon.png',
+    data: { chatUrl },
   })
 
   // Set app icon badge — try both forms for iOS PWA compatibility
@@ -51,6 +54,21 @@ messaging.onBackgroundMessage((payload) => {
       self.navigator.setAppBadge(1)
     }
   } catch (_) {}
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const targetUrl = event.notification.data?.chatUrl ?? '/'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if ('navigate' in w && 'focus' in w) {
+          return w.focus().then(() => w.navigate(targetUrl))
+        }
+      }
+      return clients.openWindow(targetUrl)
+    })
+  )
 })
 `
 

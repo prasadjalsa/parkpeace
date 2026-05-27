@@ -8,7 +8,6 @@ const corsHeaders = {
 
 // ── FCM v1 helpers ────────────────────────────────────────────────────────────
 
-// Encode object to base64url (for JWT parts)
 function toBase64url(obj: unknown): string {
   const json = JSON.stringify(obj)
   const bytes = new TextEncoder().encode(json)
@@ -17,7 +16,6 @@ function toBase64url(obj: unknown): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "")
 }
 
-// Import RSA private key from PEM string
 async function importPrivateKey(pem: string): Promise<CryptoKey> {
   const pemBody = pem
     .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -37,7 +35,6 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
   )
 }
 
-// Sign data with RS256
 async function rsaSign(data: string, privateKey: CryptoKey): Promise<string> {
   const encoded = new TextEncoder().encode(data)
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, encoded)
@@ -46,7 +43,6 @@ async function rsaSign(data: string, privateKey: CryptoKey): Promise<string> {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "")
 }
 
-// Build a signed JWT for Google OAuth 2.0
 async function buildJWT(clientEmail: string, privateKeyPem: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const header = toBase64url({ alg: "RS256", typ: "JWT" })
@@ -63,7 +59,6 @@ async function buildJWT(clientEmail: string, privateKeyPem: string): Promise<str
   return `${signingInput}.${signature}`
 }
 
-// Exchange JWT for a Google OAuth 2.0 access token
 async function getAccessToken(clientEmail: string, privateKeyPem: string): Promise<string> {
   const jwt = await buildJWT(clientEmail, privateKeyPem)
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -76,13 +71,13 @@ async function getAccessToken(clientEmail: string, privateKeyPem: string): Promi
   return data.access_token
 }
 
-// Send a FCM v1 push notification to a specific device token
 async function sendFCMPush(
   fcmToken: string,
   title: string,
   body: string,
   projectId: string,
   accessToken: string,
+  data?: Record<string, string>,
 ) {
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
@@ -96,6 +91,7 @@ async function sendFCMPush(
         message: {
           token: fcmToken,
           notification: { title, body },
+          data: data ?? {},
           android: { priority: "high" },
           apns: { headers: { "apns-priority": "10" } },
         },
@@ -173,19 +169,6 @@ serve(async (req) => {
       ? `${scannerName} reports: ${note ?? "emergency"}`
       : `${scannerName} scanned your QR${note ? ` — "${note}"` : ""}`
 
-    // Send FCM push notification if the owner has a token
-    const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-    if (serviceAccountJson && profile.fcm_token) {
-      try {
-        const sa = JSON.parse(serviceAccountJson)
-        const accessToken = await getAccessToken(sa.client_email, sa.private_key)
-        await sendFCMPush(profile.fcm_token, pushTitle, pushBody, sa.project_id, accessToken)
-      } catch (err) {
-        // Log FCM errors but don't fail the request — event is still logged
-        console.error("FCM push failed:", err)
-      }
-    }
-
     // Log the scan event
     await supabase.from("scan_events").insert({
       qr_code_id: qrCodeId,
@@ -195,15 +178,56 @@ serve(async (req) => {
       scanner_note: note ?? null,
     })
 
-    // For emergency: return emergency phone so scanner's browser opens tel:
-    // For contact: return whatsapp number + car name so scanner's browser opens wa.me
+    // Create chat session for contact actions
+    let chatSessionId: string | null = null
+    if (action === "contact") {
+      const { data: session, error: sessionError } = await supabase
+        .from("chat_sessions")
+        .insert({
+          qr_code_id: qrCodeId,
+          owner_id: qrCode.user_id,
+          scanner_name: scannerName,
+          scanner_phone: scannerPhone ?? null,
+        })
+        .select("id")
+        .single()
+
+      if (!sessionError && session) {
+        chatSessionId = session.id
+      } else {
+        console.error("Failed to create chat session:", sessionError)
+      }
+    }
+
+    // Send FCM push notification if the owner has a token
+    const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+    if (serviceAccountJson && profile.fcm_token) {
+      try {
+        const sa = JSON.parse(serviceAccountJson)
+        const accessToken = await getAccessToken(sa.client_email, sa.private_key)
+        const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://parkpeace.vercel.app"
+        const fcmData: Record<string, string> = {}
+        if (chatSessionId) fcmData.chatUrl = `${appOrigin}/chat/${chatSessionId}`
+        await sendFCMPush(profile.fcm_token, pushTitle, pushBody, sa.project_id, accessToken, fcmData)
+      } catch (err) {
+        // Log FCM errors but don't fail the request — event is still logged
+        console.error("FCM push failed:", err)
+      }
+    }
+
+    // Build response
     const response: Record<string, unknown> = { success: true }
     if (action === "emergency" && profile.emergency_phone) {
       response.emergencyPhone = profile.emergency_phone
     }
-    if (action === "contact" && profile.whatsapp_number) {
-      response.whatsappNumber = profile.whatsapp_number
-      response.carName = qrCode.name
+    if (action === "contact") {
+      if (profile.whatsapp_number) {
+        response.whatsappNumber = profile.whatsapp_number
+        response.carName = qrCode.name
+      }
+      if (chatSessionId) {
+        response.chatSessionId = chatSessionId
+      }
     }
 
     return new Response(JSON.stringify(response), {

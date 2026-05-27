@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { HelpSection } from './HelpSection'
 
@@ -48,6 +49,7 @@ export function AuthForm() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
+  const navigate = useNavigate()
 
   function switchTab(t: Tab) {
     setTab(t)
@@ -68,7 +70,12 @@ export function AuthForm() {
 
     if (tab === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setMessage({ type: 'error', text: error.message })
+      if (error) {
+        setMessage({ type: 'error', text: error.message })
+      } else {
+        const next = new URLSearchParams(window.location.search).get('next')
+        if (next) navigate(next, { replace: true })
+      }
     } else if (tab === 'register') {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) {

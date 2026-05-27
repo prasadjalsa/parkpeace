@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MessageSquare, CheckCircle, Loader2 } from 'lucide-react'
+import { ChatWindow } from '../chat/ChatWindow'
 
 interface Props {
   qrCodeId: string
@@ -27,6 +28,10 @@ export function ContactSection({ qrCodeId }: Props) {
   const [note, setNote] = useState('')
   const [state, setState] = useState<State>('form')
   const [errorMsg, setErrorMsg] = useState('')
+  const [chatSessionId, setChatSessionId] = useState<string | null>(() => {
+    // Restore chat session if scanner returns to the same QR page
+    return sessionStorage.getItem(`chat_session_${qrCodeId}`)
+  })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -74,6 +79,11 @@ export function ContactSection({ qrCodeId }: Props) {
         waTab.close()
       }
 
+      if (data.chatSessionId) {
+        setChatSessionId(data.chatSessionId)
+        sessionStorage.setItem(`chat_session_${qrCodeId}`, data.chatSessionId)
+      }
+
       setState('success')
     } catch {
       waTab?.close()
@@ -82,15 +92,26 @@ export function ContactSection({ qrCodeId }: Props) {
     }
   }
 
-  if (state === 'success') {
+  if (state === 'success' || chatSessionId) {
     return (
-      <div className="text-center py-6">
-        <CheckCircle className="w-14 h-14 text-primary-500 mx-auto mb-3" />
-        <p className="font-semibold text-gray-900 text-lg">Owner Notified</p>
-        <p className="text-gray-500 text-sm mt-1">
-          The car owner has received your message via push notification.
-        </p>
-        <p className="text-gray-400 text-xs mt-1">WhatsApp has been opened if the owner has it set up.</p>
+      <div>
+        <div className="text-center py-6">
+          <CheckCircle className="w-14 h-14 text-primary-500 mx-auto mb-3" />
+          <p className="font-semibold text-gray-900 text-lg">Owner Notified</p>
+          <p className="text-gray-500 text-sm mt-1">
+            The car owner has received your message via push notification.
+          </p>
+          <p className="text-gray-400 text-xs mt-1">WhatsApp has been opened if the owner has it set up.</p>
+        </div>
+        {chatSessionId && (
+          <div className="mt-2">
+            <ChatWindow
+              sessionId={chatSessionId}
+              senderRole="scanner"
+              scannerName={name || undefined}
+            />
+          </div>
+        )}
       </div>
     )
   }
