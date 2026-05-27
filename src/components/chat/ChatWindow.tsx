@@ -171,6 +171,19 @@ export function ChatWindow({ sessionId, senderRole, scannerName, onExpired }: Pr
       setMessages((prev) => prev.filter((m) => m.id !== localId))
       setDraft(trimmed)
       setSendError('Failed to send. Please try again.')
+    } else {
+      // Fire-and-forget: notify the other party via push
+      fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-notify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ sessionId, senderRole, body: trimmed }),
+        },
+      ).catch(() => { /* non-critical */ })
     }
 
     setSending(false)

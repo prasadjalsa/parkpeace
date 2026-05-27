@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { MessageSquare, CheckCircle, Loader2 } from 'lucide-react'
+import { MessageSquare, CheckCircle, Loader2, Bell, BellOff } from 'lucide-react'
 import { ChatWindow } from '../chat/ChatWindow'
+import { requestFCMToken } from '../../lib/firebase'
+import { supabase } from '../../lib/supabase'
 
 interface Props {
   qrCodeId: string
@@ -29,9 +31,25 @@ export function ContactSection({ qrCodeId }: Props) {
   const [state, setState] = useState<State>('form')
   const [errorMsg, setErrorMsg] = useState('')
   const [chatSessionId, setChatSessionId] = useState<string | null>(() => {
-    // Restore chat session if scanner returns to the same QR page
     return sessionStorage.getItem(`chat_session_${qrCodeId}`)
   })
+  const [notifyEnabled, setNotifyEnabled] = useState(false)
+  const [notifyLoading, setNotifyLoading] = useState(false)
+
+  async function enableNotifications(sessionId: string) {
+    setNotifyLoading(true)
+    const result = await requestFCMToken()
+    if ('error' in result) {
+      setNotifyLoading(false)
+      return
+    }
+    await supabase
+      .from('chat_sessions')
+      .update({ scanner_fcm_token: result.token })
+      .eq('id', sessionId)
+    setNotifyEnabled(true)
+    setNotifyLoading(false)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -103,6 +121,27 @@ export function ContactSection({ qrCodeId }: Props) {
           </p>
           <p className="text-gray-400 text-xs mt-1">WhatsApp has been opened if the owner has it set up.</p>
         </div>
+        {chatSessionId && !notifyEnabled && (
+          <div className="mb-3 flex justify-center">
+            <button
+              onClick={() => enableNotifications(chatSessionId)}
+              disabled={notifyLoading}
+              className="btn-secondary flex items-center gap-2 text-sm"
+            >
+              {notifyLoading
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Bell className="w-4 h-4" />}
+              Get notified when owner replies
+            </button>
+          </div>
+        )}
+        {chatSessionId && notifyEnabled && (
+          <div className="mb-3 flex justify-center">
+            <span className="flex items-center gap-1.5 text-xs text-primary-600">
+              <BellOff className="w-3.5 h-3.5" /> You'll be notified of new replies
+            </span>
+          </div>
+        )}
         {chatSessionId && (
           <div className="mt-2">
             <ChatWindow
