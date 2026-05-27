@@ -213,6 +213,12 @@ function SectionContent({ id }: { id: Section }) {
             <p className="text-xs text-amber-700">Chat sessions and messages are automatically deleted 24 hours after the scan. This keeps the system lightweight and protects privacy. Your <strong>Scan History</strong> (scanner name, phone, message, timestamp) is <strong>not</strong> deleted — only the chat thread.</p>
           </div>
 
+          <div className="bg-amber-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-amber-800 text-xs">iPhone limitation — reply notifications</p>
+            <p className="text-xs text-amber-700">When a scanner taps <strong>"Get notified when owner replies"</strong>, iPhone restricts push notifications to pages added to the Home Screen. This is an <strong>Apple limitation</strong>, not a ParkPeace issue. Android users are unaffected — the browser handles it directly.</p>
+            <p className="text-xs text-amber-700 mt-1">If you're on an iPhone and want reply notifications: open this page in <strong>Safari</strong> → tap Share → <strong>Add to Home Screen</strong> → open from there, then tap the button.</p>
+          </div>
+
           <div className="bg-gray-50 rounded-lg p-3 space-y-1">
             <p className="font-semibold text-gray-700 text-xs">Technical notes</p>
             <p className="text-xs text-gray-600">• Messages are delivered in real time via Supabase Realtime (WebSocket).</p>
