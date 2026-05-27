@@ -3,7 +3,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { HelpSection } from './HelpSection'
 
-type Tab = 'login' | 'register'
+type Tab = 'login' | 'register' | 'forgot'
 
 function PasswordInput({
   value,
@@ -69,7 +69,7 @@ export function AuthForm() {
     if (tab === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setMessage({ type: 'error', text: error.message })
-    } else {
+    } else if (tab === 'register') {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setMessage({ type: 'error', text: error.message })
@@ -77,6 +77,15 @@ export function AuthForm() {
         setMessage({ type: 'success', text: 'Account created! You can now log in.' })
         setTab('login')
         setConfirm('')
+      }
+    } else {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) {
+        setMessage({ type: 'error', text: error.message })
+      } else {
+        setMessage({ type: 'success', text: 'Password reset email sent. Check your inbox.' })
       }
     }
     setLoading(false)
@@ -94,22 +103,38 @@ export function AuthForm() {
         </div>
 
         <div className="card">
-          {/* Tab switcher */}
-          <div className="flex rounded-lg border border-gray-200 p-1 mb-6 bg-gray-50">
-            {(['login', 'register'] as Tab[]).map((t) => (
+          {/* Tab switcher — hidden on forgot password view */}
+          {tab !== 'forgot' && (
+            <div className="flex rounded-lg border border-gray-200 p-1 mb-6 bg-gray-50">
+              {(['login', 'register'] as Tab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => switchTab(t)}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
+                    tab === t
+                      ? 'bg-white text-primary-700 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {t === 'login' ? 'Sign In' : 'Register'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {tab === 'forgot' && (
+            <div className="mb-6">
               <button
-                key={t}
-                onClick={() => switchTab(t)}
-                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-                  tab === t
-                    ? 'bg-white text-primary-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                type="button"
+                onClick={() => switchTab('login')}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
               >
-                {t === 'login' ? 'Sign In' : 'Register'}
+                ← Back to Sign In
               </button>
-            ))}
-          </div>
+              <h2 className="text-base font-semibold text-gray-900 mt-2">Reset your password</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Enter your email and we'll send you a reset link.</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -123,10 +148,24 @@ export function AuthForm() {
                 required
               />
             </div>
-            <div>
-              <label className="label">Password</label>
-              <PasswordInput value={password} onChange={setPassword} minLength={6} />
-            </div>
+
+            {tab !== 'forgot' && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="label mb-0">Password</label>
+                  {tab === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => switchTab('forgot')}
+                      className="text-xs text-primary-600 hover:text-primary-800 transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <PasswordInput value={password} onChange={setPassword} minLength={6} />
+              </div>
+            )}
 
             {tab === 'register' && (
               <div>
@@ -160,7 +199,13 @@ export function AuthForm() {
               disabled={loading || (tab === 'register' && (password !== confirm || !confirm))}
               className="btn-primary w-full"
             >
-              {loading ? 'Please wait…' : tab === 'login' ? 'Sign In' : 'Create Account'}
+              {loading
+                ? 'Please wait…'
+                : tab === 'login'
+                  ? 'Sign In'
+                  : tab === 'register'
+                    ? 'Create Account'
+                    : 'Send Reset Link'}
             </button>
           </form>
         </div>

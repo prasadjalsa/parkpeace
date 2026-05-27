@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone } from 'lucide-react'
+import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound } from 'lucide-react'
 
-type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'buildplan'
+type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'buildplan'
 
 const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'howto', label: 'How to Use', icon: <BookOpen className="w-4 h-4" /> },
@@ -9,6 +9,7 @@ const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
   { id: 'homescreen', label: 'Add to Home Screen', icon: <Smartphone className="w-4 h-4" /> },
   { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
+  { id: 'password', label: 'Password Recovery', icon: <KeyRound className="w-4 h-4" /> },
   { id: 'buildplan', label: 'Build Plan', icon: <Layers className="w-4 h-4" /> },
 ]
 
@@ -155,6 +156,33 @@ function SectionContent({ id }: { id: Section }) {
           <div>
             <p className="font-semibold text-gray-800">Is this free?</p>
             <p className="mt-1">Yes, completely free. It runs on Supabase, Firebase, and Vercel free tiers with no credit card required.</p>
+          </div>
+        </div>
+      )
+    case 'password':
+      return (
+        <div className="space-y-4 text-sm text-gray-600">
+          <p>If you've forgotten your password, you can reset it by email — no need to contact anyone.</p>
+
+          <div>
+            <p className="font-semibold text-gray-800 mb-1">Steps to reset your password</p>
+            <p><strong>1.</strong> On the sign-in page, click the <strong>Sign In</strong> tab.</p>
+            <p><strong>2.</strong> Click <strong>Forgot password?</strong> (next to the Password label).</p>
+            <p><strong>3.</strong> Enter the email address you registered with and tap <strong>Send Reset Link</strong>.</p>
+            <p><strong>4.</strong> Check your inbox for an email from ParkPeace / Supabase. Check your spam folder if it doesn't arrive within a minute.</p>
+            <p><strong>5.</strong> Click the link in the email. You'll be taken to the <strong>Reset Password</strong> page.</p>
+            <p><strong>6.</strong> Enter your new password and confirm it — a green "Passwords match ✓" indicator confirms they are identical.</p>
+            <p><strong>7.</strong> Tap <strong>Set New Password</strong>. You'll be redirected to your dashboard automatically.</p>
+          </div>
+
+          <div className="bg-amber-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-amber-800 text-xs">Reset link expired?</p>
+            <p className="text-xs text-amber-700">Reset links expire after a short time. If the page shows "link may have expired", go back to Sign In → Forgot password? and request a fresh link.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-gray-700 text-xs">Changing your password when already logged in</p>
+            <p className="text-xs text-gray-600">Sign out first, then use Forgot password? on the sign-in page to set a new password.</p>
           </div>
         </div>
       )
