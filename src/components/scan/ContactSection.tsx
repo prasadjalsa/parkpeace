@@ -48,11 +48,11 @@ export function ContactSection({ qrCodeId }: Props) {
         result.error.toLowerCase().includes('blocked') ||
         result.error.toLowerCase().includes('denied')
       ) {
-        setNotifyError('Notification permission denied. Enable it in your browser settings.')
+        setNotifyError('Notifications are blocked in your browser settings. Please enable them and try again.')
       } else if (result.error.toLowerCase().includes('safari') || result.error.toLowerCase().includes('not available')) {
-        setNotifyError('On iPhone, add this page to your Home Screen first, then try again.')
+        setNotifyError('iPhone restricts push notifications to apps added to the Home Screen — this is an Apple limitation, not ours. Add this page to your Home Screen and try again.')
       } else {
-        setNotifyError('Could not enable notifications. On iPhone, add to Home Screen first.')
+        setNotifyError('iPhone only supports push notifications when this page is saved to your Home Screen — this is an Apple limitation, not ours. Add it to your Home Screen and try again.')
       }
       return
     }
