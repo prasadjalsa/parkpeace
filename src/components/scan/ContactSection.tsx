@@ -35,12 +35,25 @@ export function ContactSection({ qrCodeId }: Props) {
   })
   const [notifyEnabled, setNotifyEnabled] = useState(false)
   const [notifyLoading, setNotifyLoading] = useState(false)
+  const [notifyError, setNotifyError] = useState('')
 
   async function enableNotifications(sessionId: string) {
     setNotifyLoading(true)
+    setNotifyError('')
     const result = await requestFCMToken()
     if ('error' in result) {
       setNotifyLoading(false)
+      if (
+        result.error.toLowerCase().includes('permission') ||
+        result.error.toLowerCase().includes('blocked') ||
+        result.error.toLowerCase().includes('denied')
+      ) {
+        setNotifyError('Notification permission denied. Enable it in your browser settings.')
+      } else if (result.error.toLowerCase().includes('safari') || result.error.toLowerCase().includes('not available')) {
+        setNotifyError('On iPhone, add this page to your Home Screen first, then try again.')
+      } else {
+        setNotifyError('Could not enable notifications. On iPhone, add to Home Screen first.')
+      }
       return
     }
     await supabase
@@ -122,7 +135,10 @@ export function ContactSection({ qrCodeId }: Props) {
           <p className="text-gray-400 text-xs mt-1">WhatsApp has been opened if the owner has it set up.</p>
         </div>
         {chatSessionId && !notifyEnabled && (
-          <div className="mb-3 flex justify-center">
+          <div className="mb-3 flex flex-col items-center gap-2">
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800 text-center max-w-xs">
+              <strong>iPhone users:</strong> Add this page to your Home Screen first, then tap the button below to receive reply notifications.
+            </div>
             <button
               onClick={() => enableNotifications(chatSessionId)}
               disabled={notifyLoading}
@@ -133,6 +149,9 @@ export function ContactSection({ qrCodeId }: Props) {
                 : <Bell className="w-4 h-4" />}
               Get notified when owner replies
             </button>
+            {notifyError && (
+              <p className="text-xs text-red-500 text-center px-2">{notifyError}</p>
+            )}
           </div>
         )}
         {chatSessionId && notifyEnabled && (
