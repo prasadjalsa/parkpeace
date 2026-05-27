@@ -169,16 +169,7 @@ serve(async (req) => {
       ? `${scannerName} reports: ${note ?? "emergency"}`
       : `${scannerName} scanned your QR${note ? ` — "${note}"` : ""}`
 
-    // Log the scan event
-    await supabase.from("scan_events").insert({
-      qr_code_id: qrCodeId,
-      action,
-      scanner_name: scannerName,
-      scanner_phone: scannerPhone ?? null,
-      scanner_note: note ?? null,
-    })
-
-    // Create chat session for contact actions
+    // Create chat session first (contact only) so we can link it to the scan event
     let chatSessionId: string | null = null
     if (action === "contact") {
       const { data: session, error: sessionError } = await supabase
@@ -198,6 +189,16 @@ serve(async (req) => {
         console.error("Failed to create chat session:", sessionError)
       }
     }
+
+    // Log the scan event (with chat session link if available)
+    await supabase.from("scan_events").insert({
+      qr_code_id: qrCodeId,
+      action,
+      scanner_name: scannerName,
+      scanner_phone: scannerPhone ?? null,
+      scanner_note: note ?? null,
+      chat_session_id: chatSessionId,
+    })
 
     // Send FCM push notification if the owner has a token
     const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")

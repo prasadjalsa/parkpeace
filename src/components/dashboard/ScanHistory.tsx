@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Clock, MessageSquare, Phone, AlertTriangle, Trash2, X } from 'lucide-react'
 
@@ -9,6 +10,7 @@ interface ScanEvent {
   scanner_note: string | null
   scanner_phone: string | null
   scanned_at: string
+  chat_session_id: string | null
   qr_codes: { name: string } | null
 }
 
@@ -53,11 +55,12 @@ export function ScanHistory({ userId: _userId, qrCodeId }: Props) {
   const [toDate, setToDate] = useState(today())
   const [clearing, setClearing] = useState(false)
   const [clearError, setClearError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   async function fetchEvents() {
     let query = supabase
       .from('scan_events')
-      .select('id, action, scanner_name, scanner_note, scanner_phone, scanned_at, qr_codes(name)')
+      .select('id, action, scanner_name, scanner_note, scanner_phone, scanned_at, chat_session_id, qr_codes(name)')
       .order('scanned_at', { ascending: false })
       .limit(50)
 
@@ -210,6 +213,14 @@ export function ScanHistory({ userId: _userId, qrCodeId }: Props) {
                   )}
                   {event.scanner_note && (
                     <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{event.scanner_note}</p>
+                  )}
+                  {event.chat_session_id && (
+                    <button
+                      onClick={() => navigate(`/chat/${event.chat_session_id}`)}
+                      className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" /> Open Chat
+                    </button>
                   )}
                 </div>
                 <time className="text-xs text-gray-400 whitespace-nowrap shrink-0">
