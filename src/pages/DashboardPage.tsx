@@ -63,6 +63,12 @@ export function DashboardPage() {
   if (loading) return null
   if (!user) return <Navigate to="/" replace />
 
+  // Redirect new users to profile setup exactly once
+  if (localStorage.getItem('parkpeace_new_user') === 'true') {
+    localStorage.removeItem('parkpeace_new_user')
+    return <Navigate to="/profile" replace />
+  }
+
   const displayName = profile?.full_name?.trim() || user.email || 'Account'
 
   return (

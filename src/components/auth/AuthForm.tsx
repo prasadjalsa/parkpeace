@@ -74,6 +74,7 @@ export function AuthForm() {
       if (error) {
         setMessage({ type: 'error', text: error.message })
       } else {
+        localStorage.setItem('parkpeace_new_user', 'true')
         setMessage({ type: 'success', text: 'Account created! You can now log in.' })
         setTab('login')
         setConfirm('')
