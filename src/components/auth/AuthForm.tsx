@@ -74,7 +74,10 @@ export function AuthForm() {
         setMessage({ type: 'error', text: error.message })
       } else {
         const next = new URLSearchParams(window.location.search).get('next')
-        if (next) navigate(next, { replace: true })
+        // Only allow internal paths to prevent open redirect attacks
+        if (next && next.startsWith('/') && !next.startsWith('//')) {
+          navigate(next, { replace: true })
+        }
       }
     } else if (tab === 'register') {
       const { error } = await supabase.auth.signUp({ email, password })

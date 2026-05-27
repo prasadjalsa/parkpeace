@@ -15,7 +15,6 @@ interface ScanEvent {
 }
 
 interface Props {
-  userId: string
   qrCodeId?: string
 }
 
@@ -47,7 +46,7 @@ function daysAgo(n: number) {
   return d.toISOString().slice(0, 10)
 }
 
-export function ScanHistory({ userId: _userId, qrCodeId }: Props) {
+export function ScanHistory({ qrCodeId }: Props) {
   const [events, setEvents] = useState<ScanEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [showClear, setShowClear] = useState(false)

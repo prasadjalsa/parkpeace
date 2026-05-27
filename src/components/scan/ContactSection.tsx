@@ -127,6 +127,7 @@ export function ContactSection({ qrCodeId }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          maxLength={100}
         />
       </div>
       <div>
@@ -149,6 +150,7 @@ export function ContactSection({ qrCodeId }: Props) {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           required
+          maxLength={1000}
         />
       </div>
 

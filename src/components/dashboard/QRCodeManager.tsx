@@ -262,7 +262,7 @@ export function QRCodeManager({ userId }: Props) {
               </button>
             </div>
             <div className="overflow-y-auto p-4">
-              <ScanHistory userId={userId} qrCodeId={historyFor.id} />
+              <ScanHistory qrCodeId={historyFor.id} />
             </div>
           </div>
         </div>

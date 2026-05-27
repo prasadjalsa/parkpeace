@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "https://parkpeace.vercel.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
@@ -127,6 +127,14 @@ serve(async (req) => {
       })
     }
 
+    // Server-side input length limits (client-side limits are not a security boundary)
+    if (scannerName.length > 100 || (note && note.length > 1000) || (scannerPhone && scannerPhone.length > 20)) {
+      return new Response(JSON.stringify({ error: "Input too long" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
     // Admin Supabase client — bypasses RLS
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -216,14 +224,15 @@ serve(async (req) => {
       }
     }
 
-    // Build response
+    // Build response — sanitise phone numbers to digits and + only before returning to client
+    const sanitisePhone = (p: string) => p.replace(/[^\d+]/g, '')
     const response: Record<string, unknown> = { success: true }
     if (action === "emergency" && profile.emergency_phone) {
-      response.emergencyPhone = profile.emergency_phone
+      response.emergencyPhone = sanitisePhone(profile.emergency_phone)
     }
     if (action === "contact") {
       if (profile.whatsapp_number) {
-        response.whatsappNumber = profile.whatsapp_number
+        response.whatsappNumber = sanitisePhone(profile.whatsapp_number)
         response.carName = qrCode.name
       }
       if (chatSessionId) {

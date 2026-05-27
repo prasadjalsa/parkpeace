@@ -138,7 +138,7 @@ export function DashboardPage() {
           <QRCodeManager userId={user.id} />
         )}
         {activeTab === 'history' && (
-          <ScanHistory userId={user.id} />
+          <ScanHistory />
         )}
       </main>
     </div>

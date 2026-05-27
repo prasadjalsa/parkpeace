@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound } from 'lucide-react'
+import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound, MessageSquare } from 'lucide-react'
 
-type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'buildplan'
+type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'chat' | 'buildplan'
 
 const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'howto', label: 'How to Use', icon: <BookOpen className="w-4 h-4" /> },
@@ -10,6 +10,7 @@ const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'homescreen', label: 'Add to Home Screen', icon: <Smartphone className="w-4 h-4" /> },
   { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
   { id: 'password', label: 'Password Recovery', icon: <KeyRound className="w-4 h-4" /> },
+  { id: 'chat', label: 'Live Chat', icon: <MessageSquare className="w-4 h-4" /> },
   { id: 'buildplan', label: 'Build Plan', icon: <Layers className="w-4 h-4" /> },
 ]
 
@@ -23,7 +24,7 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR.</p>
           <p><strong>4. Add a vehicle</strong> — Go to the <strong>My Vehicles</strong> tab and tap <strong>Add Vehicle</strong>. Give it a name (e.g. "Red Swift"). A QR code is generated automatically.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
-          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message.</p>
+          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> also opens on the scanner's side — tap the notification to join the conversation.</p>
           <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any vehicle card to see that vehicle's history. Use <strong>Clear History</strong> to delete events by date range.</p>
         </div>
       )
@@ -186,6 +187,41 @@ function SectionContent({ id }: { id: Section }) {
           </div>
         </div>
       )
+    case 'chat':
+      return (
+        <div className="space-y-4 text-sm text-gray-600">
+          <p>After you submit the contact form, a <strong>Live Chat</strong> window opens immediately so you can have a real-time conversation with the car owner — no app download needed.</p>
+
+          <div>
+            <p className="font-semibold text-gray-800 mb-1">For the Scanner</p>
+            <p><strong>1.</strong> Fill in the contact form and tap <strong>Notify Owner</strong>.</p>
+            <p><strong>2.</strong> Once the owner is notified, a chat window appears below the confirmation message on the same page.</p>
+            <p><strong>3.</strong> Type your message and press <strong>Enter</strong> or tap the send button. Messages appear instantly.</p>
+            <p><strong>4.</strong> If you accidentally close the tab and return to the same QR scan URL, the chat window will reopen automatically (as long as the session hasn't expired).</p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-gray-800 mb-1">For the Owner</p>
+            <p><strong>1.</strong> When someone scans your QR and contacts you, you receive a push notification as usual.</p>
+            <p><strong>2.</strong> Tap the notification — it opens the <strong>Chat page</strong> directly in your app.</p>
+            <p><strong>3.</strong> You can also find a <strong>Open Chat</strong> link on each contact event in your <strong>Scan History</strong> tab — useful if you missed the notification.</p>
+            <p><strong>4.</strong> Reply to the scanner in real time from the chat page.</p>
+          </div>
+
+          <div className="bg-amber-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-amber-800 text-xs">Chat expires after 24 hours</p>
+            <p className="text-xs text-amber-700">Chat sessions and messages are automatically deleted 24 hours after the scan. This keeps the system lightweight and protects privacy. Your <strong>Scan History</strong> (scanner name, phone, message, timestamp) is <strong>not</strong> deleted — only the chat thread.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-gray-700 text-xs">Technical notes</p>
+            <p className="text-xs text-gray-600">• Messages are delivered in real time via Supabase Realtime (WebSocket).</p>
+            <p className="text-xs text-gray-600">• The scanner does not need an account — the chat link is secured by an unguessable session UUID.</p>
+            <p className="text-xs text-gray-600">• The owner must be logged in to access the chat page.</p>
+            <p className="text-xs text-gray-600">• If the owner is logged out when tapping the notification, they'll be redirected to sign in and then taken straight to the chat.</p>
+          </div>
+        </div>
+      )
     case 'buildplan':
       return (
         <div className="space-y-4 text-sm text-gray-600">
@@ -207,11 +243,12 @@ function SectionContent({ id }: { id: Section }) {
               <li>Profile view/edit mode — shows saved values, edit button to modify</li>
               <li>Profile accessible via a styled clickable button (name + icon) in the header</li>
               <li>Register: confirm password field with live match indicator; eye icon to show/hide password</li>
-              <li>Unread scan badge on Scan History tab + app icon badge via Web Badge API</li>
+              <li>Live chat: 24h ephemeral chat session created on contact — scanner chats inline, owner joins via notification tap or Scan History</li>
+              <li>Chat auto-deleted after 24h via pg_cron; scan history preserved independently</li>
               <li>WhatsApp integration — scanner's WhatsApp opens with pre-filled message</li>
               <li>Scanner page: contact form with name, phone, message</li>
               <li>Emergency flow: push alert to owner + scanner's phone dials emergency contact</li>
-              <li>Per-vehicle scan history with clock icon on each card</li>
+              <li>Unread scan badge on Scan History tab + app icon badge via Web Badge API</li>
               <li>Clear scan history by custom date range</li>
               <li>Help &amp; Documentation panel accessible from every page header</li>
             </ul>
