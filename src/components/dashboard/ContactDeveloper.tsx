@@ -16,6 +16,11 @@ export function ContactDeveloperForm() {
     setErrorMsg('')
 
     const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      setErrorMsg('Please sign in to contact us.')
+      setState('error')
+      return
+    }
     try {
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/contact-developer`,
@@ -44,7 +49,7 @@ export function ContactDeveloperForm() {
         <p className="font-semibold text-gray-900">Message Sent</p>
         <p className="text-sm text-gray-500 mt-1">The developer has been notified. Thank you for your feedback.</p>
         <button
-          onClick={() => setState('idle')}
+          onClick={() => { setState('idle'); setMessage('') }}
           className="btn-secondary mt-4 text-sm"
         >
           Send another message

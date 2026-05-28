@@ -267,19 +267,6 @@ def add_header_footer(canvas, doc):
 
 # ── Cover page ────────────────────────────────────────────────────────────────
 
-class CoverBackground(Flowable):
-    def __init__(self):
-        Flowable.__init__(self)
-        self.width = W - 4*cm
-        self.height = 220
-
-    def draw(self):
-        c = self.canv
-        c.setFillColor(PRIMARY)
-        c.roundRect(-0.5*cm, -20, self.width + 1*cm, self.height + 30, 12, fill=1, stroke=0)
-
-    def wrap(self, aw, ah):
-        return self.width, self.height
 
 
 def build_cover():

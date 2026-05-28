@@ -33,7 +33,9 @@ export function ContactSection({ qrCodeId }: Props) {
   const [chatSessionId, setChatSessionId] = useState<string | null>(() => {
     return sessionStorage.getItem(`chat_session_${qrCodeId}`)
   })
-  const [notifyEnabled, setNotifyEnabled] = useState(false)
+  const [notifyEnabled, setNotifyEnabled] = useState(() => {
+    return sessionStorage.getItem(`notify_enabled_${qrCodeId}`) === 'true'
+  })
   const [notifyLoading, setNotifyLoading] = useState(false)
   const [notifyError, setNotifyError] = useState('')
 
@@ -61,6 +63,7 @@ export function ContactSection({ qrCodeId }: Props) {
       .update({ scanner_fcm_token: result.token })
       .eq('id', sessionId)
     setNotifyEnabled(true)
+    sessionStorage.setItem(`notify_enabled_${qrCodeId}`, 'true')
     setNotifyLoading(false)
   }
 
