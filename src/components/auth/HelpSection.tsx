@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound, MessageSquare } from 'lucide-react'
+import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound, MessageSquare, Mail } from 'lucide-react'
+import { ContactDeveloperForm } from '../dashboard/ContactDeveloper'
 
-type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'chat' | 'buildplan'
+type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'chat' | 'contact' | 'buildplan'
 
 const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'howto', label: 'How to Use', icon: <BookOpen className="w-4 h-4" /> },
@@ -11,6 +12,7 @@ const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
   { id: 'password', label: 'Password Recovery', icon: <KeyRound className="w-4 h-4" /> },
   { id: 'chat', label: 'Live Chat', icon: <MessageSquare className="w-4 h-4" /> },
+  { id: 'contact', label: 'Contact Developer', icon: <Mail className="w-4 h-4" /> },
   { id: 'buildplan', label: 'Build Plan', icon: <Layers className="w-4 h-4" /> },
 ]
 
@@ -228,6 +230,8 @@ function SectionContent({ id }: { id: Section }) {
           </div>
         </div>
       )
+    case 'contact':
+      return <ContactDeveloperForm />
     case 'buildplan':
       return (
         <div className="space-y-4 text-sm text-gray-600">

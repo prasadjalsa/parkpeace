@@ -8,7 +8,6 @@ import { initForegroundMessaging } from '../lib/firebase'
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
 import { HelpButton } from '../components/auth/HelpSection'
-import { ContactDeveloper } from '../components/dashboard/ContactDeveloper'
 
 type Tab = 'vehicles' | 'history'
 
@@ -92,7 +91,6 @@ export function DashboardPage() {
               <span className="truncate">{displayName}</span>
             </button>
             <HelpButton />
-            <ContactDeveloper />
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
