@@ -88,6 +88,7 @@ async function sendFCMPush(
         message: {
           token: fcmToken,
           notification: { title, body },
+          data: { chatUrl: "/dashboard?help=true" },
           android: { priority: "high" },
           apns: { headers: { "apns-priority": "10" } },
         },
@@ -167,6 +168,8 @@ serve(async (req) => {
       const ok = await sendFCMPush(token, title.trim(), body.trim(), sa.project_id, accessToken)
       ok ? sent++ : failed++
     }
+
+    console.log(`Broadcast complete — sent: ${sent}, failed: ${failed}, total: ${tokens.length}`)
 
     return new Response(JSON.stringify({ success: true, sent, failed, total: tokens.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { LogOut, QrCode, Clock, UserCircle, Mail } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
@@ -20,6 +20,8 @@ export function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('vehicles')
   const [unreadCount, setUnreadCount] = useState(0)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const openHelp = searchParams.get('help') === 'true'
 
   // Count scan events newer than the last time the user viewed Scan History
   useEffect(() => {
@@ -91,7 +93,7 @@ export function DashboardPage() {
               <UserCircle className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{displayName}</span>
             </button>
-            <HelpButton />
+            <HelpButton autoOpen={openHelp} />
             <button
               onClick={signOut}
               className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"

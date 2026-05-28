@@ -315,8 +315,8 @@ function HelpPanelContent() {
 
 // ── Modal version — used in page headers ─────────────────────────────────────
 
-export function HelpButton() {
-  const [open, setOpen] = useState(false)
+export function HelpButton({ autoOpen = false }: { autoOpen?: boolean }) {
+  const [open, setOpen] = useState(autoOpen)
 
   return (
     <>
