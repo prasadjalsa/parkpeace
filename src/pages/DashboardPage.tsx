@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { LogOut, QrCode, Clock, UserCircle } from 'lucide-react'
+import { LogOut, QrCode, Clock, UserCircle, Mail } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
 import { initForegroundMessaging } from '../lib/firebase'
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
+import { DeveloperInbox } from '../components/dashboard/DeveloperInbox'
 import { HelpButton } from '../components/auth/HelpSection'
 
-type Tab = 'vehicles' | 'history'
+type Tab = 'vehicles' | 'history' | 'inbox'
 
 const LAST_SEEN_KEY = 'scan_history_last_seen'
 
@@ -109,6 +110,7 @@ export function DashboardPage() {
             {([
               { id: 'vehicles' as Tab, label: 'My Vehicles', icon: <QrCode className="w-4 h-4" /> },
               { id: 'history' as Tab, label: 'Scan History', icon: <Clock className="w-4 h-4" /> },
+              ...(profile?.is_developer ? [{ id: 'inbox' as Tab, label: 'Inbox', icon: <Mail className="w-4 h-4" /> }] : []),
             ]).map((tab) => (
               <button
                 key={tab.id}
@@ -139,6 +141,9 @@ export function DashboardPage() {
         )}
         {activeTab === 'history' && (
           <ScanHistory />
+        )}
+        {activeTab === 'inbox' && profile?.is_developer && (
+          <DeveloperInbox />
         )}
       </main>
     </div>
