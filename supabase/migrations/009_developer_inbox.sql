@@ -7,3 +7,10 @@ create policy "developer reads all messages" on contact_developer
   for select using (
     exists (select 1 from profiles where id = auth.uid() and is_developer = true)
   );
+
+-- Allow developer to delete messages
+drop policy if exists "developer deletes messages" on contact_developer;
+create policy "developer deletes messages" on contact_developer
+  for delete using (
+    exists (select 1 from profiles where id = auth.uid() and is_developer = true)
+  );
