@@ -108,14 +108,14 @@ serve(async (req) => {
   }
 
   try {
-    // Verify the user is authenticated
+    // Verify the user is authenticated using the service role client + auth header
     const authHeader = req.headers.get("authorization") ?? ""
-    const supabaseUser = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { authorization: authHeader } } },
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
+    const token = authHeader.replace("Bearer ", "")
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -139,11 +139,7 @@ serve(async (req) => {
       })
     }
 
-    // Insert into contact_developer using service role to bypass RLS insert check
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    )
+    // Insert into contact_developer
     await supabaseAdmin.from("contact_developer").insert({
       user_id: user.id,
       user_email: user.email,
