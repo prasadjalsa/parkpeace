@@ -10,6 +10,7 @@ export interface Profile {
   emergency_phone: string | null
   emergency_rel: string | null
   fcm_token: string | null
+  is_developer: boolean
 }
 
 export function useProfile(userId: string | undefined) {
