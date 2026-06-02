@@ -118,14 +118,14 @@ export function QRCodeManager({ userId }: Props) {
     ctx.fillText(name, W / 2, footerTop)
 
     // Instruction line 1
-    ctx.fillStyle = '#4b5563'
-    ctx.font = '13px system-ui, sans-serif'
+    ctx.fillStyle = '#111827'
+    ctx.font = 'bold 16px system-ui, sans-serif'
     ctx.fillText('Scan to contact the car owner', W / 2, footerTop + 26)
 
     // Instruction line 2
-    ctx.fillStyle = '#9ca3af'
-    ctx.font = '12px system-ui, sans-serif'
-    ctx.fillText('if my car is causing any issues', W / 2, footerTop + 46)
+    ctx.fillStyle = '#4b5563'
+    ctx.font = 'bold 14px system-ui, sans-serif'
+    ctx.fillText('if my car is causing any issues', W / 2, footerTop + 48)
 
     // Bottom branding
     ctx.fillStyle = '#d1fae5'

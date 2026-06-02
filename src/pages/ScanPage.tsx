@@ -104,6 +104,20 @@ export function ScanPage() {
         </div>
 
         <p className="text-center text-xs text-gray-300">Powered by ParkPeace</p>
+
+        {/* Be a user CTA */}
+        <div className="rounded-xl bg-primary-50 border border-primary-100 px-5 py-4 text-center">
+          <p className="text-sm font-semibold text-primary-800">Liked the idea?</p>
+          <p className="text-xs text-primary-600 mt-1 mb-3">
+            Place your own QR on your car and get instant alerts when someone needs to reach you.
+          </p>
+          <a
+            href="/"
+            className="inline-block bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
+          >
+            Be a user today — it's free
+          </a>
+        </div>
       </div>
     </div>
   )
