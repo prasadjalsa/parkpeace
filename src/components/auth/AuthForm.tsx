@@ -60,6 +60,7 @@ export function AuthForm() {
   function switchTab(t: Tab) {
     setTab(t)
     setMessage(null)
+    setPassword('')
     setConfirm('')
     setStage('credentials')
     setOtp('')

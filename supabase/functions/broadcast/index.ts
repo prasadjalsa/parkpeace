@@ -162,7 +162,6 @@ serve(async (req) => {
     if (error) throw new Error(`DB error: ${error.message}`)
 
     // Fetch emails from auth.users
-    const userIds = (profiles ?? []).map((p: { id: string }) => p.id)
     const { data: authUsers } = await supabase.auth.admin.listUsers()
     const emailMap: Record<string, string> = {}
     for (const u of authUsers?.users ?? []) {
