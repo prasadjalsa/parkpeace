@@ -132,7 +132,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: "ParkPeace <onboarding@resend.dev>",
           to: [user.email!],
-          subject: `${code} — Your ParkPeace sign-in code`,
+          subject: `ParkPeace — Verify your sign-in`,
           html: emailHtml,
         }),
       })
@@ -157,7 +157,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             type: "email_otp",
-            subject: `${code} — Your ParkPeace sign-in code`,
+            subject: `ParkPeace — Verify your sign-in`,
             body: emailHtml,
           }),
         }
