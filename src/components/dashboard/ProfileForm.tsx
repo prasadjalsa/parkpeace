@@ -133,7 +133,7 @@ export function ProfileForm({ profile, onSave }: Props) {
               <label className="label">Phone Number <span className="text-red-500">*</span></label>
               <input type="tel" className="input" placeholder="10-digit number e.g. 9876543210"
                 value={phone} onChange={(e) => setPhone(e.target.value)} required />
-              <p className="text-xs text-gray-400 mt-1">Must be 10 digits. Shown on the call dialer when someone contacts you.</p>
+              <p className="text-xs text-gray-400 mt-1">Must be 10 digits. Stored for identification purposes.</p>
             </div>
             <div>
               <label className="label">WhatsApp Number</label>

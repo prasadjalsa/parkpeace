@@ -22,7 +22,7 @@ function SectionContent({ id }: { id: Section }) {
       return (
         <div className="space-y-3 text-sm text-gray-600">
           <p><strong>1. Register</strong> — Create a free account with your email and password on the sign-in page.</p>
-          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Add your full name and phone number (both required). Optionally add your WhatsApp number and emergency contact. A privacy confirmation is required before adding WhatsApp — your number will be visible to scanners in WhatsApp chat. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
+          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Add your full name and phone number (both required — phone is stored for identification). Optionally add your WhatsApp number and emergency contact. A privacy confirmation is required before adding WhatsApp — your number will be visible to scanners in WhatsApp chat. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR.</p>
           <p><strong>4. Add a vehicle</strong> — Go to the <strong>My Vehicles</strong> tab and tap <strong>Add Vehicle</strong>. Give it a name (e.g. "Red Swift"). A QR code is generated automatically.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
@@ -41,7 +41,7 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>6.</strong> Tap the <strong>profile button</strong> (your name, top-right) to open Profile. Click <strong>Edit</strong> and fill in:</p>
           <ul className="list-disc list-inside ml-3 space-y-1">
             <li>Full Name (required)</li>
-            <li>Phone Number (required)</li>
+            <li>Phone Number (required — stored for identification)</li>
             <li>WhatsApp Number (optional — a privacy confirmation is shown before you can add it, as your number will be visible to scanners in WhatsApp chat)</li>
             <li>Emergency Contact name, phone, and relationship</li>
           </ul>
