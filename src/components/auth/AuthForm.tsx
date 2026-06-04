@@ -93,8 +93,12 @@ export function AuthForm() {
     setLoading(true)
 
     if (tab === 'login') {
+      // Set otp_pending BEFORE signing in so onAuthStateChange sees it immediately
+      sessionStorage.setItem('otp_pending', 'true')
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
+        sessionStorage.removeItem('otp_pending')
         setMessage({ type: 'error', text: error.message })
         setLoading(false)
         return
@@ -103,18 +107,19 @@ export function AuthForm() {
       // Check if OTP is required for this user
       const otpRequired = await sendOtp(data.session.access_token)
       if (otpRequired) {
-        // Mark OTP as pending in sessionStorage so dashboard blocks access
-        sessionStorage.setItem('otp_pending', 'true')
         setStage('otp')
         setLoading(false)
         return
       }
 
-      // OTP disabled — clear any stale flag and navigate
+      // OTP disabled — clear flag and navigate
       sessionStorage.removeItem('otp_pending')
+      await supabase.auth.refreshSession()
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
         navigate(next, { replace: true })
+      } else {
+        navigate('/dashboard', { replace: true })
       }
     } else if (tab === 'register') {
       const { error } = await supabase.auth.signUp({ email, password })
