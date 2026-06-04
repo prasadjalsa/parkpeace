@@ -165,11 +165,15 @@ export function AuthForm() {
       return
     }
 
-    // OTP verified — clear pending flag and navigate
+    // OTP verified — clear pending flag and force session refresh
     sessionStorage.removeItem('otp_pending')
+    // Re-trigger auth state by refreshing the session
+    await supabase.auth.refreshSession()
     const next = new URLSearchParams(window.location.search).get('next')
     if (next && next.startsWith('/') && !next.startsWith('//')) {
       navigate(next, { replace: true })
+    } else {
+      navigate('/dashboard', { replace: true })
     }
     setLoading(false)
   }
