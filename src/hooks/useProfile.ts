@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { encryptPhoneFields, decryptPhoneFields } from '../lib/phoneCrypto'
 
 export interface Profile {
   id: string
@@ -24,7 +25,10 @@ export function useProfile(userId: string | undefined) {
       .select('*')
       .eq('id', userId)
       .single()
-    setProfile(data)
+    if (data) {
+      const decrypted = await decryptPhoneFields(data as unknown as Record<string, unknown>)
+      setProfile(decrypted as unknown as Profile)
+    }
     setLoading(false)
   }, [userId])
 
@@ -32,12 +36,16 @@ export function useProfile(userId: string | undefined) {
 
   async function saveProfile(updates: Partial<Omit<Profile, 'id'>>) {
     if (!userId) return { error: new Error('Not logged in') }
+    const encrypted = await encryptPhoneFields(updates as Record<string, unknown>)
     const { data, error } = await supabase
       .from('profiles')
-      .upsert({ id: userId, ...updates, updated_at: new Date().toISOString() })
+      .upsert({ id: userId, ...encrypted, updated_at: new Date().toISOString() })
       .select()
       .single()
-    if (!error) setProfile(data)
+    if (!error && data) {
+      const decrypted = await decryptPhoneFields(data as unknown as Record<string, unknown>)
+      setProfile(decrypted as unknown as Profile)
+    }
     return { error }
   }
 

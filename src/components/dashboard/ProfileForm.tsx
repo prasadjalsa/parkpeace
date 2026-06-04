@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Save, Bell, BellOff, Pencil, X } from 'lucide-react'
+import { Save, Bell, BellOff, Pencil, X, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react'
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
+import { supabase } from '../../lib/supabase'
 
 interface Props {
   profile: Profile | null
@@ -33,8 +34,79 @@ export function ProfileForm({ profile, onSave }: Props) {
     typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'enabled' : 'idle'
   )
   const [notifError, setNotifError] = useState<string | null>(null)
+  const [mfaEnrolled, setMfaEnrolled] = useState(false)
+  const [mfaLoading, setMfaLoading] = useState(false)
+  const [mfaOtp, setMfaOtp] = useState('')
+  const [mfaFactorId, setMfaFactorId] = useState('')
+  const [mfaChallengeId, setMfaChallengeId] = useState('')
+  const [mfaStage, setMfaStage] = useState<'idle' | 'verify' | 'done'>('idle')
+  const [mfaError, setMfaError] = useState('')
+  const [mfaSuccess, setMfaSuccess] = useState('')
 
-  // Sync form fields whenever profile loads or changes
+  // Check if email MFA is already enrolled
+  useEffect(() => {
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      const allFactors = [...(data?.totp ?? []), ...(data?.phone ?? [])]
+      const emailFactor = allFactors.find(f => f.factor_type === 'email' && f.status === 'verified')
+      setMfaEnrolled(!!emailFactor)
+      if (emailFactor) setMfaFactorId(emailFactor.id)
+    })
+  }, [])
+
+  async function handleEnrol2FA() {
+    setMfaLoading(true)
+    setMfaError('')
+    setMfaSuccess('')
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'email' })
+    if (error || !data) {
+      setMfaError(error?.message ?? 'Failed to start enrolment.')
+      setMfaLoading(false)
+      return
+    }
+    setMfaFactorId(data.id)
+    // Issue challenge to send OTP email
+    const { data: challenge, error: challengeErr } = await supabase.auth.mfa.challenge({ factorId: data.id })
+    if (challengeErr || !challenge) {
+      setMfaError(challengeErr?.message ?? 'Failed to send OTP.')
+      setMfaLoading(false)
+      return
+    }
+    setMfaChallengeId(challenge.id)
+    setMfaStage('verify')
+    setMfaLoading(false)
+  }
+
+  async function handleVerify2FA() {
+    setMfaLoading(true)
+    setMfaError('')
+    const { error } = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: mfaChallengeId, code: mfaOtp.trim() })
+    if (error) {
+      setMfaError('Invalid code. Please try again.')
+      setMfaLoading(false)
+      return
+    }
+    setMfaEnrolled(true)
+    setMfaStage('done')
+    setMfaOtp('')
+    setMfaSuccess('2FA enabled. You will receive an email OTP on every sign-in.')
+    setMfaLoading(false)
+  }
+
+  async function handleUnenrol2FA() {
+    setMfaLoading(true)
+    setMfaError('')
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: mfaFactorId })
+    if (error) {
+      setMfaError(error.message)
+      setMfaLoading(false)
+      return
+    }
+    setMfaEnrolled(false)
+    setMfaFactorId('')
+    setMfaStage('idle')
+    setMfaSuccess('2FA has been disabled.')
+    setMfaLoading(false)
+  }
   useEffect(() => {
     if (!profile) return
     setFullName(profile.full_name ?? '')
@@ -253,6 +325,84 @@ export function ProfileForm({ profile, onSave }: Props) {
         )}
         {notifError && (
           <p className="text-xs text-red-500 mt-2 break-all">{notifError}</p>
+        )}
+      </div>
+
+      {/* Two-Factor Authentication */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Two-Factor Authentication</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {mfaEnrolled
+                ? 'Email OTP is active. You\'ll receive a code every time you sign in.'
+                : 'Add an extra layer of security — receive a one-time code by email on every sign-in.'}
+            </p>
+          </div>
+          <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+            mfaEnrolled ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+          }`}>
+            {mfaEnrolled
+              ? <><ShieldCheck className="w-3.5 h-3.5" /> Enabled</>
+              : <><ShieldOff className="w-3.5 h-3.5" /> Disabled</>}
+          </div>
+        </div>
+
+        {mfaError && <p className="text-xs text-red-500 mt-2">{mfaError}</p>}
+        {mfaSuccess && <p className="text-xs text-green-600 mt-2">{mfaSuccess}</p>}
+
+        {!mfaEnrolled && mfaStage === 'idle' && (
+          <button
+            onClick={handleEnrol2FA}
+            disabled={mfaLoading}
+            className="btn-secondary mt-3 text-sm flex items-center gap-2"
+          >
+            {mfaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            Enable 2FA
+          </button>
+        )}
+
+        {mfaStage === 'verify' && (
+          <div className="mt-3 space-y-3">
+            <p className="text-xs text-gray-500">A 6-digit code has been sent to your email. Enter it below to complete setup.</p>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="input text-center text-xl tracking-widest font-mono"
+              placeholder="000000"
+              value={mfaOtp}
+              onChange={(e) => setMfaOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleVerify2FA}
+                disabled={mfaLoading || mfaOtp.length !== 6}
+                className="btn-primary text-sm flex items-center gap-2"
+              >
+                {mfaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Verify & Enable
+              </button>
+              <button
+                onClick={() => { setMfaStage('idle'); setMfaOtp(''); setMfaError('') }}
+                className="btn-secondary text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mfaEnrolled && mfaStage !== 'verify' && (
+          <button
+            onClick={handleUnenrol2FA}
+            disabled={mfaLoading}
+            className="mt-3 text-xs text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
+          >
+            {mfaLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldOff className="w-3.5 h-3.5" />}
+            Disable 2FA
+          </button>
         )}
       </div>
     </div>

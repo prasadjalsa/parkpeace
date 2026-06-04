@@ -206,6 +206,19 @@ serve(async (req) => {
       ? `${scannerName} reports: ${note ?? "emergency"}`
       : `${scannerName} scanned your QR${note ? ` — "${note}"` : ""}`
 
+    // Encrypt scanner_phone before storing
+    const phoneKey = Deno.env.get("PHONE_ENCRYPTION_KEY") ?? ""
+    async function encryptField(value: string | null): Promise<string | null> {
+      if (!value || !phoneKey) return value
+      try {
+        const { data } = await supabase.rpc("encrypt_phone", { p_value: value, p_key: phoneKey })
+        return data as string
+      } catch {
+        return value
+      }
+    }
+    const encryptedScannerPhone = await encryptField(scannerPhone ?? null)
+
     // Create chat session first (contact only) so we can link it to the scan event
     let chatSessionId: string | null = null
     if (action === "contact") {
@@ -215,7 +228,7 @@ serve(async (req) => {
           qr_code_id: qrCodeId,
           owner_id: qrCode.user_id,
           scanner_name: scannerName,
-          scanner_phone: scannerPhone ?? null,
+          scanner_phone: encryptedScannerPhone,
         })
         .select("id")
         .single()
@@ -232,7 +245,7 @@ serve(async (req) => {
       qr_code_id: qrCodeId,
       action,
       scanner_name: scannerName,
-      scanner_phone: scannerPhone ?? null,
+      scanner_phone: encryptedScannerPhone,
       scanner_note: note ?? null,
       chat_session_id: chatSessionId,
     })
@@ -253,16 +266,32 @@ serve(async (req) => {
       }
     }
 
-    // Build response — sanitise phone numbers to digits and + only before returning to client
+    // Build response — decrypt phone numbers, then sanitise before returning to client
+    const phoneKey = Deno.env.get("PHONE_ENCRYPTION_KEY") ?? ""
     const sanitisePhone = (p: string) => p.replace(/[^\d+]/g, '')
+
+    async function decryptField(value: string | null): Promise<string | null> {
+      if (!value || !phoneKey) return value
+      try {
+        const { data } = await supabase.rpc("decrypt_phone", { p_value: value, p_key: phoneKey })
+        return data as string
+      } catch {
+        return value
+      }
+    }
+
     const response: Record<string, unknown> = { success: true }
     if (action === "emergency" && profile.emergency_phone) {
-      response.emergencyPhone = sanitisePhone(profile.emergency_phone)
+      const decrypted = await decryptField(profile.emergency_phone)
+      if (decrypted) response.emergencyPhone = sanitisePhone(decrypted)
     }
     if (action === "contact") {
       if (profile.whatsapp_number) {
-        response.whatsappNumber = sanitisePhone(profile.whatsapp_number)
-        response.carName = qrCode.name
+        const decrypted = await decryptField(profile.whatsapp_number)
+        if (decrypted) {
+          response.whatsappNumber = sanitisePhone(decrypted)
+          response.carName = qrCode.name
+        }
       }
       if (chatSessionId) {
         response.chatSessionId = chatSessionId

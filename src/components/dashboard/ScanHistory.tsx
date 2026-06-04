@@ -3,6 +3,34 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Clock, MessageSquare, Phone, AlertTriangle, Trash2, X } from 'lucide-react'
 
+async function decryptPhones(events: ScanEvent[]): Promise<ScanEvent[]> {
+  const phones = events.map(e => e.scanner_phone).filter(Boolean) as string[]
+  if (phones.length === 0) return events
+
+  const { data: { session } } = await supabase.auth.getSession()
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/phone-crypto`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'decrypt',
+          fields: Object.fromEntries(events.map((e, i) => [`p${i}`, e.scanner_phone])),
+        }),
+      }
+    )
+    if (!res.ok) return events
+    const decrypted = await res.json()
+    return events.map((e, i) => ({ ...e, scanner_phone: decrypted[`p${i}`] ?? e.scanner_phone }))
+  } catch {
+    return events
+  }
+}
+
 interface ScanEvent {
   id: string
   action: string
@@ -66,7 +94,9 @@ export function ScanHistory({ qrCodeId }: Props) {
     if (qrCodeId) query = query.eq('qr_code_id', qrCodeId)
 
     const { data } = await query
-    setEvents((data as unknown as ScanEvent[]) ?? [])
+    const raw = (data as unknown as ScanEvent[]) ?? []
+    const decrypted = await decryptPhones(raw)
+    setEvents(decrypted)
     setLoading(false)
   }
 
