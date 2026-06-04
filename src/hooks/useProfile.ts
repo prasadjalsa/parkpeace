@@ -12,6 +12,7 @@ export interface Profile {
   emergency_rel: string | null
   fcm_token: string | null
   is_developer: boolean
+  otp_enabled: boolean
 }
 
 export function useProfile(userId: string | undefined) {

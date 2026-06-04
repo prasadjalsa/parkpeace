@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Mail, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { HelpSection } from './HelpSection'
@@ -50,8 +50,6 @@ export function AuthForm() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [otp, setOtp] = useState('')
-  const [factorId, setFactorId] = useState('')
-  const [challengeId, setChallengeId] = useState('')
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
@@ -63,6 +61,22 @@ export function AuthForm() {
     setConfirm('')
     setStage('credentials')
     setOtp('')
+  }
+
+  async function sendOtp(accessToken: string): Promise<boolean> {
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-otp`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({}),
+      }
+    )
+    const data = await res.json()
+    return data.otpRequired === true
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -84,30 +98,15 @@ export function AuthForm() {
         return
       }
 
-      // Check if MFA is required
-      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-      if (aalData?.nextLevel === 'aal2' && aalData?.currentLevel === 'aal1') {
-        // MFA enrolled — issue a challenge
-        const { data: factors } = await supabase.auth.mfa.listFactors()
-        const emailFactor = factors?.totp?.[0] ?? factors?.phone?.[0]
-        const allFactors = [...(factors?.totp ?? []), ...(factors?.phone ?? [])]
-        const factor = allFactors.find(f => f.factor_type === 'email') ?? allFactors[0]
-        if (factor) {
-          const { data: challenge, error: challengeErr } = await supabase.auth.mfa.challenge({ factorId: factor.id })
-          if (challengeErr || !challenge) {
-            setMessage({ type: 'error', text: challengeErr?.message ?? 'Failed to send OTP.' })
-            setLoading(false)
-            return
-          }
-          setFactorId(factor.id)
-          setChallengeId(challenge.id)
-          setStage('otp')
-          setLoading(false)
-          return
-        }
+      // Check if OTP is required for this user
+      const otpRequired = await sendOtp(data.session.access_token)
+      if (otpRequired) {
+        setStage('otp')
+        setLoading(false)
+        return
       }
 
-      // No MFA — navigate directly
+      // OTP disabled — navigate directly
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
         navigate(next, { replace: true })
@@ -141,14 +140,22 @@ export function AuthForm() {
     setLoading(true)
     setMessage(null)
 
-    const { error } = await supabase.auth.mfa.verify({
-      factorId,
-      challengeId,
-      code: otp.trim(),
-    })
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-otp`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ code: otp.trim() }),
+      }
+    )
+    const data = await res.json()
 
-    if (error) {
-      setMessage({ type: 'error', text: 'Invalid code. Please check your email and try again.' })
+    if (!data.verified) {
+      setMessage({ type: 'error', text: data.error ?? 'Invalid code. Please try again.' })
       setLoading(false)
       return
     }
@@ -163,11 +170,9 @@ export function AuthForm() {
   async function resendOtp() {
     setResending(true)
     setMessage(null)
-    const { data: challenge, error } = await supabase.auth.mfa.challenge({ factorId })
-    if (error || !challenge) {
-      setMessage({ type: 'error', text: 'Failed to resend code. Please try again.' })
-    } else {
-      setChallengeId(challenge.id)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await sendOtp(session.access_token)
       setMessage({ type: 'success', text: 'New code sent. Check your email.' })
     }
     setResending(false)
@@ -190,7 +195,7 @@ export function AuthForm() {
           <div className="card">
             <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-full mb-3">
-                <Mail className="w-6 h-6 text-primary-600" />
+                <ShieldCheck className="w-6 h-6 text-primary-600" />
               </div>
               <h2 className="text-base font-semibold text-gray-900">Check your email</h2>
               <p className="text-xs text-gray-500 mt-1">
