@@ -139,7 +139,7 @@ function SectionContent({ id }: { id: Section }) {
           </div>
           <div>
             <p className="font-semibold text-gray-800">Is my phone or WhatsApp number shown to the scanner?</p>
-            <p className="mt-1">Your <strong>phone number</strong> is never shown to the scanner. Your <strong>WhatsApp number</strong> is not displayed on the scan page, but once the scanner opens WhatsApp it will be visible to them in the WhatsApp chat — this is how WhatsApp works. You are asked to confirm this before adding your WhatsApp number in Profile.</p>
+            <p className="mt-1">Your <strong>phone number</strong> is never shown to the scanner. Your <strong>WhatsApp number</strong> is not displayed on the scan page, but once the scanner opens WhatsApp it will be visible to them in the WhatsApp chat — this is how WhatsApp works. You are asked to confirm this before adding your WhatsApp number in Profile. Scanner contact details (name and phone number) entered in the contact form are only accessible to you as the owner — they are protected server-side and not visible to other users.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">What happens when Contact Owner is submitted?</p>
