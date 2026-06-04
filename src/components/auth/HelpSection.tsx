@@ -22,12 +22,12 @@ function SectionContent({ id }: { id: Section }) {
       return (
         <div className="space-y-3 text-sm text-gray-600">
           <p><strong>1. Register</strong> — Create a free account with your email and password on the sign-in page.</p>
-          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Add your full name, phone number, WhatsApp number, and emergency contact. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
+          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Add your full name and phone number (both required). Optionally add your WhatsApp number and emergency contact. A privacy confirmation is required before adding WhatsApp — your number will be visible to scanners in WhatsApp chat. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR.</p>
           <p><strong>4. Add a vehicle</strong> — Go to the <strong>My Vehicles</strong> tab and tap <strong>Add Vehicle</strong>. Give it a name (e.g. "Red Swift"). A QR code is generated automatically.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
-          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> also opens on the scanner's side — tap the notification to join the conversation.</p>
-          <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any vehicle card to see that vehicle's history. Use <strong>Clear History</strong> to delete events by date range.</p>
+          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. Both you and the scanner receive push notifications for every new chat message. The scanner can also tap <strong>"Get notified when owner replies"</strong> to opt in to reply notifications (iPhone users must add the page to Home Screen first). If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
+          <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any vehicle card to see only that vehicle's history. Use <strong>Clear History</strong> to delete events by date range. A red badge on the tab shows how many new scans you haven't viewed yet.</p>
         </div>
       )
     case 'register':
@@ -40,9 +40,9 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>5.</strong> Sign in with the same email and password.</p>
           <p><strong>6.</strong> Tap the <strong>profile button</strong> (your name, top-right) to open Profile. Click <strong>Edit</strong> and fill in:</p>
           <ul className="list-disc list-inside ml-3 space-y-1">
-            <li>Full Name</li>
+            <li>Full Name (required)</li>
             <li>Phone Number (required)</li>
-            <li>WhatsApp Number (optional — lets scanners message you via WhatsApp)</li>
+            <li>WhatsApp Number (optional — a privacy confirmation is shown before you can add it, as your number will be visible to scanners in WhatsApp chat)</li>
             <li>Emergency Contact name, phone, and relationship</li>
           </ul>
           <p><strong>7.</strong> Click <strong>Save Profile</strong>, then enable push notifications.</p>
@@ -60,6 +60,11 @@ function SectionContent({ id }: { id: Section }) {
             <p><strong>3.</strong> When the browser asks for permission, tap <strong>Allow</strong>.</p>
             <p><strong>4.</strong> The button turns green — notifications are active on this device.</p>
             <p className="text-xs text-gray-400 mt-1">Each device must enable notifications separately. The token is tied to the browser and device.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-gray-700 text-xs">Reply notifications for scanners</p>
+            <p className="text-xs text-gray-600">Android users receive reply notifications automatically in the browser — no extra setup needed. iPhone users must add this page to their Home Screen first (Apple limitation — see the Add to Home Screen tab).</p>
           </div>
 
           <div className="bg-blue-50 rounded-lg p-3 space-y-1">
@@ -134,15 +139,15 @@ function SectionContent({ id }: { id: Section }) {
           </div>
           <div>
             <p className="font-semibold text-gray-800">Is my phone or WhatsApp number shown to the scanner?</p>
-            <p className="mt-1">No. Both numbers are hidden. The scanner never sees them — the server returns the WhatsApp number only after the notification is sent, and only to open WhatsApp on the scanner's phone.</p>
+            <p className="mt-1">Your <strong>phone number</strong> is never shown to the scanner. Your <strong>WhatsApp number</strong> is not displayed on the scan page, but once the scanner opens WhatsApp it will be visible to them in the WhatsApp chat — this is how WhatsApp works. You are asked to confirm this before adding your WhatsApp number in Profile.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">What happens when Contact Owner is submitted?</p>
-            <p className="mt-1">A push notification is sent to your device instantly. If you have a WhatsApp number saved, the scanner's WhatsApp opens with a pre-filled message including their name, number, and message. Both happen with a single button tap.</p>
+            <p className="mt-1">A push notification is sent to your device instantly. If you have a WhatsApp number saved, the scanner's WhatsApp opens with a pre-filled message including their name, number, and message. A live chat session also opens on the scanner's side. All happen with a single button tap.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">What happens when Emergency is used?</p>
-            <p className="mt-1">The event is logged, you receive a push notification, and the scanner's phone opens the dialer to call your emergency contact directly. No server cost — the call is made from the scanner's own phone.</p>
+            <p className="mt-1">The event is logged with the scanner's name and situation, you receive a push notification, and the scanner's phone opens the dialer to call your emergency contact directly. No server cost — the call is made from the scanner's own phone.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">Can I have multiple vehicles?</p>
@@ -150,11 +155,19 @@ function SectionContent({ id }: { id: Section }) {
           </div>
           <div>
             <p className="font-semibold text-gray-800">How do I see who contacted me for a specific car?</p>
-            <p className="mt-1">Tap the clock icon on any vehicle card in My Vehicles to see that vehicle's scan history in a popup.</p>
+            <p className="mt-1">Tap the clock icon on any vehicle card in My Vehicles to see only that vehicle's scan history. You can also see all scans across all vehicles in the Scan History tab.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">How do I clear old scan history?</p>
             <p className="mt-1">Open Scan History (or a vehicle's history), tap <strong>Clear History</strong>, set a date range, and confirm. Only events within that range are deleted.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">Does the Scan History tab show me when new scans arrive?</p>
+            <p className="mt-1">Yes. A red badge on the Scan History tab shows how many new scans you haven't viewed yet. The badge clears when you open the tab.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">Is my scan history deleted when a chat expires?</p>
+            <p className="mt-1">No. Only the chat messages expire after 24 hours. Your scan history — who scanned, when, their name, phone, and message — is kept permanently unless you manually delete it.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">Is this free?</p>
@@ -231,7 +244,12 @@ function SectionContent({ id }: { id: Section }) {
         </div>
       )
     case 'contact':
-      return <ContactDeveloperForm />
+      return (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500">You must be signed in to send feedback. Your email is included automatically so the developer can follow up. Messages go to the Developer Inbox and a push notification is sent to the developer instantly.</p>
+          <ContactDeveloperForm />
+        </div>
+      )
     case 'buildplan':
       return (
         <div className="space-y-4 text-sm text-gray-600">
@@ -255,19 +273,23 @@ function SectionContent({ id }: { id: Section }) {
               <li>Register: confirm password field with live match indicator; eye icon to show/hide password</li>
               <li>Live chat: 24h ephemeral chat session created on contact — scanner chats inline, owner joins via notification tap or Scan History</li>
               <li>Chat auto-deleted after 24h via pg_cron; scan history preserved independently</li>
-              <li>WhatsApp integration — scanner's WhatsApp opens with pre-filled message</li>
-              <li>Scanner page: contact form with name, phone, message</li>
+              <li>Chat reply push notifications — both owner and scanner notified on every new message</li>
+              <li>WhatsApp integration — scanner's WhatsApp opens with pre-filled message; privacy confirmation required before owner can add WhatsApp number</li>
+              <li>Scanner page: contact form with name, phone, message; "Be a user today" CTA banner</li>
               <li>Emergency flow: push alert to owner + scanner's phone dials emergency contact</li>
               <li>Unread scan badge on Scan History tab + app icon badge via Web Badge API</li>
               <li>Clear scan history by custom date range</li>
               <li>Help &amp; Documentation panel accessible from every page header</li>
+              <li>Contact Developer form in Help panel — logged-in users send feedback with instant push to developer</li>
+              <li>Developer Inbox tab (developer account only) — view and bulk-delete user messages</li>
+              <li>Broadcast push notifications to all users via Edge Function triggered from Supabase SQL Editor</li>
             </ul>
           </div>
           <div>
             <p className="font-semibold text-gray-800 mb-1">Key Design Decisions</p>
             <ul className="list-disc list-inside space-y-1 ml-1">
               <li>Scanner page is fully public — no login required</li>
-              <li>Owner's phone and WhatsApp number never exposed to scanner</li>
+              <li>Owner's phone number is never shown to the scanner; WhatsApp number becomes visible in WhatsApp chat once opened — users confirm this before adding it</li>
               <li>WhatsApp number returned by Edge Function only after notification is sent</li>
               <li>Emergency uses scanner's own phone to dial (free — no Twilio)</li>
               <li>Firebase service worker generated at build time from env vars (no API keys in git)</li>

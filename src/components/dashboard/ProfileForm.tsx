@@ -23,6 +23,7 @@ export function ProfileForm({ profile, onSave }: Props) {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
+  const [whatsappConfirmed, setWhatsappConfirmed] = useState(false)
   const [emergencyName, setEmergencyName] = useState('')
   const [emergencyPhone, setEmergencyPhone] = useState('')
   const [emergencyRel, setEmergencyRel] = useState('')
@@ -39,6 +40,7 @@ export function ProfileForm({ profile, onSave }: Props) {
     setFullName(profile.full_name ?? '')
     setPhone(profile.phone ?? '')
     setWhatsapp(profile.whatsapp_number ?? '')
+    setWhatsappConfirmed(!!profile.whatsapp_number)
     setEmergencyName(profile.emergency_name ?? '')
     setEmergencyPhone(profile.emergency_phone ?? '')
     setEmergencyRel(profile.emergency_rel ?? '')
@@ -49,6 +51,7 @@ export function ProfileForm({ profile, onSave }: Props) {
     setFullName(profile?.full_name ?? '')
     setPhone(profile?.phone ?? '')
     setWhatsapp(profile?.whatsapp_number ?? '')
+    setWhatsappConfirmed(!!profile?.whatsapp_number)
     setEmergencyName(profile?.emergency_name ?? '')
     setEmergencyPhone(profile?.emergency_phone ?? '')
     setEmergencyRel(profile?.emergency_rel ?? '')
@@ -58,6 +61,7 @@ export function ProfileForm({ profile, onSave }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!fullName.trim()) { setError('Your full name is required.'); return }
     const digits = phone.replace(/\D/g, '')
     if (!phone.trim()) { setError('Your phone number is required.'); return }
     if (digits.length !== 10) { setError('Phone number must be exactly 10 digits.'); return }
@@ -121,9 +125,9 @@ export function ProfileForm({ profile, onSave }: Props) {
         ) : (
           <form id="profile-form" onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label">Full Name</label>
+              <label className="label">Full Name <span className="text-red-500">*</span></label>
               <input type="text" className="input" placeholder="e.g. Priya Sharma"
-                value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             </div>
             <div>
               <label className="label">Phone Number <span className="text-red-500">*</span></label>
@@ -133,9 +137,28 @@ export function ProfileForm({ profile, onSave }: Props) {
             </div>
             <div>
               <label className="label">WhatsApp Number</label>
-              <input type="tel" className="input" placeholder="+91 98765 43210"
-                value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-              <p className="text-xs text-gray-400 mt-1">Scanners will open WhatsApp with a pre-filled message. Your number is never shown to them.</p>
+              {!whatsappConfirmed ? (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 space-y-2">
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    <strong>⚠️ Visibility notice:</strong> When a scanner contacts you via WhatsApp, your number will be visible to them in the WhatsApp chat. Only add your number if you're comfortable with this.
+                  </p>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 rounded"
+                      checked={whatsappConfirmed}
+                      onChange={(e) => setWhatsappConfirmed(e.target.checked)}
+                    />
+                    <span className="text-xs text-amber-900 font-medium">I understand my number will be visible and want to add it</span>
+                  </label>
+                </div>
+              ) : (
+                <>
+                  <input type="tel" className="input" placeholder="+91 98765 43210"
+                    value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+                  <p className="text-xs text-gray-400 mt-1">Your number will be visible to scanners in WhatsApp chat.</p>
+                </>
+              )}
             </div>
           </form>
         )}
