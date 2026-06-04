@@ -100,25 +100,32 @@ export function ContactSection({ qrCodeId }: Props) {
       if (!res.ok) throw new Error('Failed to send notification')
       const data = await res.json()
 
-      // Navigate the pre-opened tab to WhatsApp if the owner has a WhatsApp number
-      if (waTab && data.whatsappNumber) {
-        waTab.location.href = buildWhatsAppUrl(
-          data.whatsappNumber,
-          data.carName ?? '',
-          name.trim(),
-          phone.trim(),
-          note.trim(),
-        )
-      } else if (waTab) {
-        waTab.close()
-      }
-
       if (data.chatSessionId) {
         setChatSessionId(data.chatSessionId)
         sessionStorage.setItem(`chat_session_${qrCodeId}`, data.chatSessionId)
       }
 
       setState('success')
+
+      // Open WhatsApp after state is set and sessionStorage is written,
+      // so chat is recoverable when the user returns to this tab.
+      if (data.whatsappNumber) {
+        const waUrl = buildWhatsAppUrl(
+          data.whatsappNumber,
+          data.carName ?? '',
+          name.trim(),
+          phone.trim(),
+          note.trim(),
+        )
+        if (waTab) {
+          waTab.location.href = waUrl
+        } else {
+          // Fallback for iOS where window.open is blocked — navigate current tab
+          window.location.href = waUrl
+        }
+      } else if (waTab) {
+        waTab.close()
+      }
     } catch {
       waTab?.close()
       setErrorMsg('Could not reach the owner. Please try again.')
