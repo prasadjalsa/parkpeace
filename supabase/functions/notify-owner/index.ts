@@ -104,6 +104,18 @@ async function sendFCMPush(
   }
 }
 
+// ── Rate limiting via Deno KV ─────────────────────────────────────────────────
+
+const kv = await Deno.openKv()
+
+async function isRateLimited(key: string, max: number, windowSecs: number): Promise<boolean> {
+  const entry = await kv.get<number>([key])
+  const count = entry.value ?? 0
+  if (count >= max) return true
+  await kv.set([key], count + 1, { expireIn: windowSecs * 1000 })
+  return false
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -118,6 +130,16 @@ serve(async (req) => {
       scannerPhone?: string
       note: string
       action: "contact" | "emergency"
+    }
+
+    // Rate limit: max 10 calls per IP per QR code per hour
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
+    const rateLimitKey = `notify-owner:${ip}:${qrCodeId}`
+    if (await isRateLimited(rateLimitKey, 10, 3600)) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
     }
 
     if (!qrCodeId || !scannerName || !action) {

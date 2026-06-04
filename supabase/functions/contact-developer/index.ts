@@ -100,6 +100,18 @@ async function sendFCMPush(
   }
 }
 
+// ── Rate limiting via Deno KV ─────────────────────────────────────────────────
+
+const kv = await Deno.openKv()
+
+async function isRateLimited(key: string, max: number, windowSecs: number): Promise<boolean> {
+  const entry = await kv.get<number>([key])
+  const count = entry.value ?? 0
+  if (count >= max) return true
+  await kv.set([key], count + 1, { expireIn: windowSecs * 1000 })
+  return false
+}
+
 // ── Main handler ───────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -119,6 +131,14 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    // Rate limit: max 5 messages per user per hour
+    if (await isRateLimited(`contact-developer:${user.id}`, 5, 3600)) {
+      return new Response(JSON.stringify({ error: "Too many messages. Please try again later." }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }

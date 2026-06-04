@@ -102,6 +102,18 @@ async function sendFCMPush(
   }
 }
 
+// ── Rate limiting via Deno KV ─────────────────────────────────────────────────
+
+const kv = await Deno.openKv()
+
+async function isRateLimited(key: string, max: number, windowSecs: number): Promise<boolean> {
+  const entry = await kv.get<number>([key])
+  const count = entry.value ?? 0
+  if (count >= max) return true
+  await kv.set([key], count + 1, { expireIn: windowSecs * 1000 })
+  return false
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -110,6 +122,10 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("authorization") ?? ""
+    const token = authHeader.replace("Bearer ", "")
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+
     const { sessionId, senderRole, body } = await req.json() as {
       sessionId: string
       senderRole: "scanner" | "owner"
@@ -134,6 +150,45 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
+
+    // Owner must be authenticated; scanner calls with anon key
+    if (senderRole === "owner") {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        })
+      }
+      // Verify the authenticated user actually owns this session
+      const { data: sessionCheck } = await supabase
+        .from("chat_sessions")
+        .select("owner_id")
+        .eq("id", sessionId)
+        .single()
+      if (!sessionCheck || sessionCheck.owner_id !== user.id) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        })
+      }
+    } else {
+      // Scanner: must be calling with the anon key (not a user session)
+      if (token !== anonKey) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        })
+      }
+    }
+
+    // Rate limit: max 60 notifications per session per hour
+    if (await isRateLimited(`chat-notify:${sessionId}`, 60, 3600)) {
+      return new Response(JSON.stringify({ error: "Too many requests." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
 
     // Fetch session + owner FCM token + scanner FCM token
     const { data: session, error: sessionError } = await supabase

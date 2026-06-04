@@ -172,18 +172,28 @@ export function ChatWindow({ sessionId, senderRole, scannerName, onExpired }: Pr
       setDraft(trimmed)
       setSendError('Failed to send. Please try again.')
     } else {
-      // Fire-and-forget: notify the other party via push
-      fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-notify`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      // Fire-and-forget: notify the other party via push.
+      // Owner sends their session JWT; scanner sends the anon key.
+      const getAuthToken = async () => {
+        if (senderRole === 'owner') {
+          const { data: { session } } = await supabase.auth.getSession()
+          return session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY
+        }
+        return import.meta.env.VITE_SUPABASE_ANON_KEY
+      }
+      getAuthToken().then((authToken) => {
+        fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-notify`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ sessionId, senderRole, body: trimmed }),
           },
-          body: JSON.stringify({ sessionId, senderRole, body: trimmed }),
-        },
-      ).catch(() => { /* non-critical */ })
+        ).catch(() => { /* non-critical */ })
+      })
     }
 
     setSending(false)
