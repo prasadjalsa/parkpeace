@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { LogOut, QrCode, Clock, UserCircle, Mail } from 'lucide-react'
+import { LogOut, QrCode, Clock, UserCircle, Mail, X, Megaphone } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
@@ -24,6 +24,14 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const openHelp = searchParams.get('help') === 'true'
+
+  // Parse announcement from broadcast notification tap
+  const announceParam = searchParams.get('announce')
+  const [announcement, setAnnouncement] = useState<{ title: string; body: string } | null>(() => {
+    if (!announceParam) return null
+    const parts = announceParam.split('|')
+    return { title: decodeURIComponent(parts[0] ?? ''), body: decodeURIComponent(parts[1] ?? '') }
+  })
 
   // Count scan events newer than the last time the user viewed Scan History
   useEffect(() => {
@@ -170,6 +178,32 @@ export function DashboardPage() {
           <DeveloperInbox />
         )}
       </main>
+
+      {/* Broadcast announcement popup */}
+      {announcement && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
+            <div className="bg-primary-600 px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Megaphone className="w-4 h-4 text-white" />
+                <h2 className="font-semibold text-white text-sm">{announcement.title}</h2>
+              </div>
+              <button onClick={() => setAnnouncement(null)} className="text-white/70 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-gray-700 leading-relaxed">{announcement.body}</p>
+              <button
+                onClick={() => setAnnouncement(null)}
+                className="btn-primary w-full mt-4"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
