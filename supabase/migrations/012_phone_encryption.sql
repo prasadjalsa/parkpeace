@@ -39,7 +39,7 @@ $$;
 --   emergency_phone = case when emergency_phone is not null
 --                     then public.encrypt_phone(emergency_phone, current_setting('app.phone_key'))
 --                     else null end
--- where phone is not null and phone not like 'hQ%';
+-- where phone is not null and phone not like 'ww0E%';
 --
 -- update public.scan_events set
 --   scanner_phone = public.encrypt_phone(scanner_phone, current_setting('app.phone_key'))

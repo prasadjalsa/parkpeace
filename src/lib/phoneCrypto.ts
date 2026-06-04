@@ -2,9 +2,10 @@ import { supabase } from './supabase'
 
 const PHONE_FIELDS = ['phone', 'whatsapp_number', 'emergency_phone', 'scanner_phone'] as const
 
-// Detect if a value looks like pgcrypto base64 ciphertext (starts with 'hQ')
+// Detect if a value looks like pgcrypto base64 ciphertext
+// pgp_sym_encrypt output base64-encoded starts with 'ww0E' in PostgreSQL
 function isEncrypted(value: string | null): boolean {
-  return typeof value === 'string' && value.startsWith('hQ')
+  return typeof value === 'string' && (value.startsWith('ww0E') || value.startsWith('hQ'))
 }
 
 async function callPhoneCrypto(
