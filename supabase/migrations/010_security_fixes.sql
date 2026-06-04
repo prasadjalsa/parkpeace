@@ -35,3 +35,38 @@ create policy "scanner updates own token" on chat_sessions
 -- Scanners now read sessions via the session-verify Edge Function (service role).
 -- Owner reads are protected by the existing "owner reads own sessions" RLS policy.
 drop policy if exists "scanner reads session by id" on chat_sessions;
+
+-- The scanner insert/select policies on chat_messages use an exists() subquery
+-- against chat_sessions. Now that anon SELECT on chat_sessions is removed,
+-- that subquery would fail. Use a security definer function instead — it runs
+-- as the postgres role (bypasses RLS) so it can check session validity without
+-- exposing any rows to the anon caller.
+create or replace function public.chat_session_valid(p_session_id uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from public.chat_sessions
+    where id = p_session_id
+    and expires_at > now()
+  );
+$$;
+
+-- Re-create scanner policies to use the security definer function
+drop policy if exists "scanner reads messages by session"  on chat_messages;
+drop policy if exists "scanner inserts message"            on chat_messages;
+
+create policy "scanner reads messages by session" on chat_messages
+  for select using (
+    auth.uid() is null
+    and public.chat_session_valid(session_id)
+  );
+
+create policy "scanner inserts message" on chat_messages
+  for insert with check (
+    sender_role = 'scanner'
+    and auth.uid() is null
+    and public.chat_session_valid(session_id)
+  );

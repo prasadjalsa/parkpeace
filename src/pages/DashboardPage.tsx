@@ -13,12 +13,14 @@ import { HelpButton } from '../components/auth/HelpSection'
 type Tab = 'vehicles' | 'history' | 'inbox'
 
 const LAST_SEEN_KEY = 'scan_history_last_seen'
+const INBOX_LAST_SEEN_KEY = 'inbox_last_seen'
 
 export function DashboardPage() {
   const { user, loading, signOut } = useAuth()
   const { profile } = useProfile(user?.id)
   const [activeTab, setActiveTab] = useState<Tab>('vehicles')
   const [unreadCount, setUnreadCount] = useState(0)
+  const [inboxCount, setInboxCount] = useState(0)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const openHelp = searchParams.get('help') === 'true'
@@ -33,6 +35,17 @@ export function DashboardPage() {
       .gt('scanned_at', lastSeen)
       .then(({ count }) => setUnreadCount(count ?? 0))
   }, [user?.id])
+
+  // Count unread inbox messages for developer
+  useEffect(() => {
+    if (!profile?.is_developer) return
+    const lastSeen = localStorage.getItem(INBOX_LAST_SEEN_KEY) ?? new Date(0).toISOString()
+    supabase
+      .from('contact_developer')
+      .select('id', { count: 'exact', head: true })
+      .gt('created_at', lastSeen)
+      .then(({ count }) => setInboxCount(count ?? 0))
+  }, [profile?.is_developer])
 
   // Handle foreground FCM messages — increment unread badge in real time
   useEffect(() => {
@@ -60,6 +73,10 @@ export function DashboardPage() {
       localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString())
       setUnreadCount(0)
       navigator.clearAppBadge?.()
+    }
+    if (tab === 'inbox') {
+      localStorage.setItem(INBOX_LAST_SEEN_KEY, new Date().toISOString())
+      setInboxCount(0)
     }
   }
 
@@ -128,6 +145,11 @@ export function DashboardPage() {
                 {tab.id === 'history' && unreadCount > 0 && (
                   <span className="absolute -top-0.5 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                     {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+                {tab.id === 'inbox' && inboxCount > 0 && (
+                  <span className="absolute -top-0.5 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    {inboxCount > 99 ? '99+' : inboxCount}
                   </span>
                 )}
               </button>
