@@ -138,21 +138,27 @@ serve(async (req) => {
       })
     }
 
-    // Fetch all FCM tokens from profiles
+    // Fetch all FCM tokens from profiles — join with auth.users for email
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("fcm_token")
+      .select("id, full_name, fcm_token")
       .not("fcm_token", "is", null)
 
     if (error) throw new Error(`DB error: ${error.message}`)
 
-    const tokens = (profiles ?? []).map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean)
+    // Fetch emails from auth.users
+    const userIds = (profiles ?? []).map((p: { id: string }) => p.id)
+    const { data: authUsers } = await supabase.auth.admin.listUsers()
+    const emailMap: Record<string, string> = {}
+    for (const u of authUsers?.users ?? []) {
+      emailMap[u.id] = u.email ?? ''
+    }
 
-    if (tokens.length === 0) {
+    if ((profiles ?? []).length === 0) {
       return new Response(JSON.stringify({ success: true, sent: 0, failed: 0, message: "No registered devices" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
@@ -164,14 +170,34 @@ serve(async (req) => {
     // Send to all tokens — sequential to avoid rate limits
     let sent = 0
     let failed = 0
-    for (const token of tokens) {
-      const ok = await sendFCMPush(token, title.trim(), body.trim(), sa.project_id, accessToken)
-      ok ? sent++ : failed++
+    const failedUsers: { id: string; full_name: string; email: string }[] = []
+
+    for (const profile of (profiles ?? []) as { id: string; full_name: string | null; fcm_token: string }[]) {
+      const ok = await sendFCMPush(profile.fcm_token, title.trim(), body.trim(), sa.project_id, accessToken)
+      if (ok) {
+        sent++
+      } else {
+        failed++
+        failedUsers.push({
+          id: profile.id,
+          full_name: profile.full_name ?? 'Unknown',
+          email: emailMap[profile.id] ?? 'Unknown',
+        })
+      }
     }
 
-    console.log(`Broadcast complete — sent: ${sent}, failed: ${failed}, total: ${tokens.length}`)
+    console.log(`Broadcast complete — sent: ${sent}, failed: ${failed}, total: ${(profiles ?? []).length}`)
+    if (failedUsers.length > 0) {
+      console.log(`Failed users: ${JSON.stringify(failedUsers)}`)
+    }
 
-    return new Response(JSON.stringify({ success: true, sent, failed, total: tokens.length }), {
+    return new Response(JSON.stringify({
+      success: true,
+      sent,
+      failed,
+      total: (profiles ?? []).length,
+      failedUsers: failedUsers.length > 0 ? failedUsers : undefined,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (err) {
