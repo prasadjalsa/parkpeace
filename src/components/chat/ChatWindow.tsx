@@ -58,17 +58,49 @@ export function ChatWindow({ sessionId, senderRole, scannerName, onExpired }: Pr
 
   useEffect(() => {
     async function init() {
-      const { data, error } = await supabase
-        .from('chat_sessions')
-        .select('id, expires_at, scanner_name')
-        .eq('id', sessionId)
-        .single()
+      let data: ChatSession | null = null
 
-      if (error || !data || new Date(data.expires_at) <= new Date()) {
-        setExpired(true)
-        onExpired?.()
-        return
+      if (senderRole === 'scanner') {
+        // Scanner reads session via Edge Function — avoids exposing all sessions via anon key
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/session-verify`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({ sessionId }),
+            }
+          )
+          if (res.status === 410 || res.status === 404) {
+            setExpired(true)
+            onExpired?.()
+            return
+          }
+          if (res.ok) data = await res.json()
+        } catch {
+          setExpired(true)
+          onExpired?.()
+          return
+        }
+      } else {
+        // Owner reads session directly — protected by RLS (auth.uid() = owner_id)
+        const { data: row, error } = await supabase
+          .from('chat_sessions')
+          .select('id, expires_at, scanner_name')
+          .eq('id', sessionId)
+          .single()
+        if (error || !row || new Date(row.expires_at) <= new Date()) {
+          setExpired(true)
+          onExpired?.()
+          return
+        }
+        data = row
       }
+
+      if (!data) { setExpired(true); onExpired?.(); return }
 
       setSession(data)
       setCountdown(formatCountdown(data.expires_at))

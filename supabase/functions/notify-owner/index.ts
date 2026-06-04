@@ -123,8 +123,26 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders })
   }
 
+  // Guard: reject non-JSON requests early before any processing
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return new Response(JSON.stringify({ error: "Content-Type must be application/json" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  }
+
+  let body: unknown
   try {
-    const { qrCodeId, scannerName, scannerPhone, note, action } = await req.json() as {
+    body = await req.json()
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  }
+
+  try {
+    const { qrCodeId, scannerName, scannerPhone, note, action } = body as {
       qrCodeId: string
       scannerName: string
       scannerPhone?: string

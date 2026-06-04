@@ -121,12 +121,29 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders })
   }
 
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return new Response(JSON.stringify({ error: "Content-Type must be application/json" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  }
+
+  let parsedBody: unknown
+  try {
+    parsedBody = await req.json()
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  }
+
   try {
     const authHeader = req.headers.get("authorization") ?? ""
     const token = authHeader.replace("Bearer ", "")
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 
-    const { sessionId, senderRole, body } = await req.json() as {
+    const { sessionId, senderRole, body } = parsedBody as {
       sessionId: string
       senderRole: "scanner" | "owner"
       body: string

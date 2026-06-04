@@ -30,3 +30,8 @@ create policy "scanner updates own token" on chat_sessions
     and scanner_fcm_token is not null
     and length(scanner_fcm_token) > 10
   );
+
+-- Fix CRITICAL PII exposure: remove anon SELECT on chat_sessions.
+-- Scanners now read sessions via the session-verify Edge Function (service role).
+-- Owner reads are protected by the existing "owner reads own sessions" RLS policy.
+drop policy if exists "scanner reads session by id" on chat_sessions;
