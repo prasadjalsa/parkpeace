@@ -88,7 +88,7 @@ async function sendFCMPush(
         message: {
           token: fcmToken,
           notification: { title, body },
-          data: { chatUrl: "/dashboard?help=true" },
+          data: { chatUrl: `/dashboard?announce=${encodeURIComponent(title.trim())}|${encodeURIComponent(body.trim())}` },
           android: { priority: "high" },
           apns: { headers: { "apns-priority": "10" } },
         },
@@ -121,7 +121,11 @@ serve(async (req) => {
       })
     }
 
-    const { title, body } = await req.json() as { title: string; body: string }
+    const { title, body, testUserIds } = await req.json() as {
+      title: string
+      body: string
+      testUserIds?: string[]
+    }
 
     if (!title?.trim() || !body?.trim()) {
       return new Response(JSON.stringify({ error: "title and body are required" }), {
@@ -143,10 +147,17 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
-    const { data: profiles, error } = await supabase
+    // Fetch FCM tokens — all users or specific test users
+    let profileQuery = supabase
       .from("profiles")
       .select("id, full_name, fcm_token")
       .not("fcm_token", "is", null)
+
+    if (testUserIds && testUserIds.length > 0) {
+      profileQuery = profileQuery.in("id", testUserIds)
+    }
+
+    const { data: profiles, error } = await profileQuery
 
     if (error) throw new Error(`DB error: ${error.message}`)
 
@@ -186,7 +197,8 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Broadcast complete — sent: ${sent}, failed: ${failed}, total: ${(profiles ?? []).length}`)
+    const isTest = testUserIds && testUserIds.length > 0
+    console.log(`Broadcast ${isTest ? '(TEST) ' : ''}complete — sent: ${sent}, failed: ${failed}, total: ${(profiles ?? []).length}`)
     if (failedUsers.length > 0) {
       console.log(`Failed users: ${JSON.stringify(failedUsers)}`)
     }
