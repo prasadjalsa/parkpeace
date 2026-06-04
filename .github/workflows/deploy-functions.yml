@@ -56,14 +56,6 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Deploy phone-crypto function
-        run: |
-          supabase functions deploy phone-crypto \
-            --no-verify-jwt \
-            --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
       - name: Deploy send-otp function
         run: |
           supabase functions deploy send-otp \

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Save, Bell, BellOff, Pencil, X, ShieldCheck, ShieldOff } from 'lucide-react'
+import { Save, Bell, BellOff, Pencil, X, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react'
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
 import { supabase } from '../../lib/supabase'
@@ -289,9 +289,11 @@ export function ProfileForm({ profile, onSave }: Props) {
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
             }`}
           >
-            {otpEnabled
-              ? <><ShieldCheck className="w-3.5 h-3.5" /> Enabled</>
-              : <><ShieldOff className="w-3.5 h-3.5" /> Disabled</>}
+            {otpSaving
+              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
+              : otpEnabled
+                ? <><ShieldCheck className="w-3.5 h-3.5" /> Enabled</>
+                : <><ShieldOff className="w-3.5 h-3.5" /> Disabled</>}
           </button>
         </div>
       </div>
