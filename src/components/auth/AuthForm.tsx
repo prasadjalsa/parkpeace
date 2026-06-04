@@ -45,7 +45,9 @@ function PasswordInput({
 
 export function AuthForm() {
   const [tab, setTab] = useState<Tab>('login')
-  const [stage, setStage] = useState<Stage>('credentials')
+  const [stage, setStage] = useState<Stage>(() =>
+    sessionStorage.getItem('otp_pending') === 'true' ? 'otp' : 'credentials'
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -101,15 +103,15 @@ export function AuthForm() {
       // Check if OTP is required for this user
       const otpRequired = await sendOtp(data.session.access_token)
       if (otpRequired) {
-        // Sign out immediately so the auth state doesn't navigate away
-        // The session is restored after OTP verification
-        await supabase.auth.signOut()
+        // Mark OTP as pending in sessionStorage so dashboard blocks access
+        sessionStorage.setItem('otp_pending', 'true')
         setStage('otp')
         setLoading(false)
         return
       }
 
-      // OTP disabled — navigate directly
+      // OTP disabled — clear any stale flag and navigate
+      sessionStorage.removeItem('otp_pending')
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
         navigate(next, { replace: true })
@@ -143,22 +145,14 @@ export function AuthForm() {
     setLoading(true)
     setMessage(null)
 
-    // Sign in again to get a fresh session token for the verify call
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    if (signInError) {
-      setMessage({ type: 'error', text: 'Session expired. Please go back and sign in again.' })
-      setStage('credentials')
-      setLoading(false)
-      return
-    }
-
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-otp`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${signInData.session.access_token}`,
+          'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ code: otp.trim() }),
       }
@@ -166,14 +160,13 @@ export function AuthForm() {
     const data = await res.json()
 
     if (!data.verified) {
-      // Sign out again if OTP is wrong
-      await supabase.auth.signOut()
       setMessage({ type: 'error', text: data.error ?? 'Invalid code. Please try again.' })
       setLoading(false)
       return
     }
 
-    // OTP verified — session is now active, navigate
+    // OTP verified — clear pending flag and navigate
+    sessionStorage.removeItem('otp_pending')
     const next = new URLSearchParams(window.location.search).get('next')
     if (next && next.startsWith('/') && !next.startsWith('//')) {
       navigate(next, { replace: true })
@@ -184,15 +177,11 @@ export function AuthForm() {
   async function resendOtp() {
     setResending(true)
     setMessage(null)
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setMessage({ type: 'error', text: 'Could not resend. Please go back and sign in again.' })
-      setResending(false)
-      return
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await sendOtp(session.access_token)
+      setMessage({ type: 'success', text: 'New code sent. Check your email.' })
     }
-    await sendOtp(data.session.access_token)
-    await supabase.auth.signOut()
-    setMessage({ type: 'success', text: 'New code sent. Check your email.' })
     setResending(false)
   }
 

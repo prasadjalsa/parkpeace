@@ -12,6 +12,7 @@ export function ProfilePage() {
 
   if (loading) return null
   if (!user) return <Navigate to="/" replace />
+  if (sessionStorage.getItem('otp_pending') === 'true') return <Navigate to="/" replace />
 
   return (
     <div className="min-h-screen bg-gray-50">

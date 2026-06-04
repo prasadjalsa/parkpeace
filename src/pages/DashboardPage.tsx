@@ -83,6 +83,11 @@ export function DashboardPage() {
   if (loading) return null
   if (!user) return <Navigate to="/" replace />
 
+  // Block dashboard if OTP verification is still pending
+  if (sessionStorage.getItem('otp_pending') === 'true') {
+    return <Navigate to="/" replace />
+  }
+
   // Redirect new users to profile setup exactly once
   if (localStorage.getItem('parkpeace_new_user') === 'true') {
     localStorage.removeItem('parkpeace_new_user')
