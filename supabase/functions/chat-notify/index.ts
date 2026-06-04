@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { isRateLimited } from "../_shared/rate-limit.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,22 +103,6 @@ async function sendFCMPush(
   }
 }
 
-// ── Rate limiting via in-memory Map ──────────────────────────────────────────
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function isRateLimited(key: string, max: number, windowSecs: number): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(key)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + windowSecs * 1000 })
-    return false
-  }
-  if (entry.count >= max) return true
-  entry.count++
-  return false
-}
-
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -204,7 +189,7 @@ serve(async (req) => {
     }
 
     // Rate limit: max 60 notifications per session per hour
-    if (isRateLimited(`chat-notify:${sessionId}`, 60, 3600)) {
+    if (await isRateLimited(`chat-notify:${sessionId}`, 60, 3600)) {
       return new Response(JSON.stringify({ error: "Too many requests." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
