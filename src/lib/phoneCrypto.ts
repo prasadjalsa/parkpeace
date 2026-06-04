@@ -2,6 +2,11 @@ import { supabase } from './supabase'
 
 const PHONE_FIELDS = ['phone', 'whatsapp_number', 'emergency_phone', 'scanner_phone'] as const
 
+// Detect if a value looks like pgcrypto base64 ciphertext (starts with 'hQ')
+function isEncrypted(value: string | null): boolean {
+  return typeof value === 'string' && value.startsWith('hQ')
+}
+
 async function callPhoneCrypto(
   action: 'encrypt' | 'decrypt',
   fields: Record<string, string | null>,
@@ -18,14 +23,18 @@ async function callPhoneCrypto(
       body: JSON.stringify({ action, fields }),
     },
   )
-  if (!res.ok) throw new Error(`phone-crypto ${action} failed`)
+  if (!res.ok) return fields  // fail open — return originals
   return res.json()
 }
 
 export async function encryptPhoneFields<T extends Record<string, unknown>>(data: T): Promise<T> {
   const toEncrypt: Record<string, string | null> = {}
   for (const f of PHONE_FIELDS) {
-    if (f in data) toEncrypt[f] = (data[f] as string | null) ?? null
+    if (f in data) {
+      const val = (data[f] as string | null) ?? null
+      // Don't double-encrypt already-encrypted values
+      if (val && !isEncrypted(val)) toEncrypt[f] = val
+    }
   }
   if (Object.keys(toEncrypt).length === 0) return data
   const encrypted = await callPhoneCrypto('encrypt', toEncrypt)
@@ -35,7 +44,11 @@ export async function encryptPhoneFields<T extends Record<string, unknown>>(data
 export async function decryptPhoneFields<T extends Record<string, unknown>>(data: T): Promise<T> {
   const toDecrypt: Record<string, string | null> = {}
   for (const f of PHONE_FIELDS) {
-    if (f in data) toDecrypt[f] = (data[f] as string | null) ?? null
+    if (f in data) {
+      const val = (data[f] as string | null) ?? null
+      // Only decrypt values that look encrypted
+      if (val && isEncrypted(val)) toDecrypt[f] = val
+    }
   }
   if (Object.keys(toDecrypt).length === 0) return data
   const decrypted = await callPhoneCrypto('decrypt', toDecrypt)

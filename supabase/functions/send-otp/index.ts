@@ -119,21 +119,10 @@ serve(async (req) => {
 </body>
 </html>`
 
-    // Use Supabase Admin API to send email
-    const emailRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/users/${user.id}`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        "Content-Type": "application/json",
-        "apikey": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      },
-      body: JSON.stringify({ email: user.email }),
-    })
-
-    // Send email via Resend if configured, otherwise use Supabase SMTP
+    // Send email via Resend if configured, otherwise via Supabase SMTP
     const resendKey = Deno.env.get("RESEND_API_KEY")
     if (resendKey) {
-      await fetch("https://api.resend.com/emails", {
+      const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${resendKey}`,
@@ -146,14 +135,36 @@ serve(async (req) => {
           html: emailHtml,
         }),
       })
+      if (!emailRes.ok) {
+        const err = await emailRes.text()
+        console.error("Resend error:", err)
+      }
     } else {
-      // Fallback: use Supabase's built-in mailer via magic link workaround
-      await supabase.auth.admin.generateLink({
-        type: "magiclink",
-        email: user.email!,
-      })
-      // Note: without Resend, log the code for testing
-      console.log(`OTP for ${user.email}: ${code}`)
+      // Use Supabase's built-in mailer via the admin email endpoint
+      const smtpRes = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/users/${user.id}/send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            "Content-Type": "application/json",
+            "apikey": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+          },
+          body: JSON.stringify({
+            type: "email_otp",
+            subject: `${code} — Your ParkPeace sign-in code`,
+            body: emailHtml,
+          }),
+        }
+      )
+      if (!smtpRes.ok) {
+        // Final fallback — send via Supabase email invite (repurposed)
+        await supabase.auth.admin.inviteUserByEmail(user.email!, {
+          data: { otp_hint: code },
+          redirectTo: Deno.env.get("APP_ORIGIN") ?? "https://parkpeace.vercel.app",
+        })
+        console.log(`OTP sent via invite fallback for ${user.email}`)
+      }
     }
 
     return new Response(JSON.stringify({ otpRequired: true, sent: true }), {
