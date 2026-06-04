@@ -104,15 +104,19 @@ async function sendFCMPush(
   }
 }
 
-// ── Rate limiting via Deno KV ─────────────────────────────────────────────────
+// ── Rate limiting via in-memory Map ──────────────────────────────────────────
 
-const kv = await Deno.openKv()
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
-async function isRateLimited(key: string, max: number, windowSecs: number): Promise<boolean> {
-  const entry = await kv.get<number>([key])
-  const count = entry.value ?? 0
-  if (count >= max) return true
-  await kv.set([key], count + 1, { expireIn: windowSecs * 1000 })
+function isRateLimited(key: string, max: number, windowSecs: number): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(key)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + windowSecs * 1000 })
+    return false
+  }
+  if (entry.count >= max) return true
+  entry.count++
   return false
 }
 
@@ -153,7 +157,7 @@ serve(async (req) => {
     // Rate limit: max 10 calls per IP per QR code per hour
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
     const rateLimitKey = `notify-owner:${ip}:${qrCodeId}`
-    if (await isRateLimited(rateLimitKey, 10, 3600)) {
+    if (isRateLimited(rateLimitKey, 10, 3600)) {
       return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
