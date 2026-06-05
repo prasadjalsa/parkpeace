@@ -155,21 +155,32 @@ serve(async (req) => {
       message: message.trim(),
     })
 
-    // Send FCM push to developer device
-    const devFcmToken = Deno.env.get("DEVELOPER_FCM_TOKEN")
+    // Send FCM push to developer device — look up token from DB instead of env var
     const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-    if (devFcmToken && serviceAccountJson) {
+    if (serviceAccountJson) {
       try {
-        const sa = JSON.parse(serviceAccountJson)
-        const accessToken = await getAccessToken(sa.client_email, sa.private_key)
-        const preview = message.trim().length > 80 ? message.trim().slice(0, 80) + "…" : message.trim()
-        await sendFCMPush(
-          devFcmToken,
-          `ParkPeace: message from ${user.email}`,
-          preview,
-          sa.project_id,
-          accessToken,
-        )
+        // Find the developer's FCM token from profiles
+        const { data: devProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("fcm_token")
+          .eq("is_developer", true)
+          .not("fcm_token", "is", null)
+          .limit(1)
+          .single()
+
+        const devFcmToken = devProfile?.fcm_token
+        if (devFcmToken) {
+          const sa = JSON.parse(serviceAccountJson)
+          const accessToken = await getAccessToken(sa.client_email, sa.private_key)
+          const preview = message.trim().length > 80 ? message.trim().slice(0, 80) + "…" : message.trim()
+          await sendFCMPush(
+            devFcmToken,
+            `ParkPeace: message from ${user.email}`,
+            preview,
+            sa.project_id,
+            accessToken,
+          )
+        }
       } catch (err) {
         console.error("FCM push to developer failed:", err)
       }
