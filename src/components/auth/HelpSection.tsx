@@ -37,7 +37,7 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>2.</strong> Enter your email address and choose a password (min. 6 characters). Tap the eye icon to show or hide it.</p>
           <p><strong>3.</strong> Re-enter the same password in the <strong>Confirm Password</strong> field — a green "Passwords match ✓" indicator confirms they are identical. The Create Account button stays disabled until they match.</p>
           <p><strong>4.</strong> Click <strong>Create Account</strong>. You'll be switched to Sign In automatically.</p>
-          <p><strong>5.</strong> Sign in with the same email and password. A 6-digit verification code will be sent to your email — enter it to complete sign-in. You can disable this in Profile → Email Verification.</p>
+          <p><strong>5.</strong> Sign in with the same email and password.</p>
           <p><strong>6.</strong> Tap the <strong>profile button</strong> (your name, top-right) to open Profile. Click <strong>Edit</strong> and fill in:</p>
           <ul className="list-disc list-inside ml-3 space-y-1">
             <li>Full Name (required)</li>
@@ -170,10 +170,6 @@ function SectionContent({ id }: { id: Section }) {
             <p className="mt-1">No. Only the chat messages expire after 24 hours. Your scan history — who scanned, when, their name, phone, and message — is kept permanently unless you manually delete it.</p>
           </div>
           <div>
-            <p className="font-semibold text-gray-800">What is the email verification code?</p>
-            <p className="mt-1">Every time you sign in, ParkPeace sends a 6-digit code to your registered email. Enter it on the verification screen to complete sign-in. This protects your account even if your password is compromised. You can turn it off in <strong>Profile → Email Verification</strong> if you prefer not to use it.</p>
-          </div>
-          <div>
             <p className="font-semibold text-gray-800">Is this free?</p>
             <p className="mt-1">Yes, completely free. It runs on Supabase, Firebase, and Vercel free tiers with no credit card required.</p>
           </div>
@@ -287,8 +283,7 @@ function SectionContent({ id }: { id: Section }) {
               <li>Contact Developer form in Help panel — logged-in users send feedback with instant push to developer</li>
               <li>Developer Inbox tab (developer account only) — view and bulk-delete user messages</li>
               <li>Broadcast push notifications with in-app announcement popup when tapped</li>
-              <li>Email OTP verification — 6-digit code sent to email on every sign-in; opt-out toggle in Profile</li>
-              <li>Security hardening: persistent DB-backed rate limiting, CSP headers, RLS fixes, otp_challenges protection</li>
+              <li>Security hardening: persistent DB-backed rate limiting, CSP headers, RLS fixes</li>
             </ul>
           </div>
           <div>

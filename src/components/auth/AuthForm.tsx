@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { HelpSection } from './HelpSection'
 
 type Tab = 'login' | 'register' | 'forgot'
-type Stage = 'credentials' | 'otp'
 
 function PasswordInput({
   value,
@@ -45,13 +44,10 @@ function PasswordInput({
 
 export function AuthForm() {
   const [tab, setTab] = useState<Tab>('login')
-  const [stage, setStage] = useState<Stage>('credentials')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
-  const [resending, setResending] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const navigate = useNavigate()
 
@@ -60,24 +56,6 @@ export function AuthForm() {
     setMessage(null)
     setPassword('')
     setConfirm('')
-    setStage('credentials')
-    setOtp('')
-  }
-
-  async function sendOtp(accessToken: string): Promise<boolean> {
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-otp`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({}),
-      }
-    )
-    const data = await res.json()
-    return data.otpRequired === true
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,9 +76,6 @@ export function AuthForm() {
         setLoading(false)
         return
       }
-
-      // OTP disabled — navigate directly
-      sessionStorage.removeItem('otp_pending')
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
         navigate(next, { replace: true })
@@ -128,141 +103,6 @@ export function AuthForm() {
       }
     }
     setLoading(false)
-  }
-
-  async function handleOtpSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!otp.trim()) return
-    setLoading(true)
-    setMessage(null)
-
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-otp`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ code: otp.trim() }),
-      }
-    )
-    const data = await res.json()
-
-    if (!data.verified) {
-      setMessage({ type: 'error', text: data.error ?? 'Invalid code. Please try again.' })
-      setLoading(false)
-      return
-    }
-
-    // OTP verified — clear pending flag and force session refresh
-    sessionStorage.removeItem('otp_pending')
-    // Re-trigger auth state by refreshing the session
-    await supabase.auth.refreshSession()
-    const next = new URLSearchParams(window.location.search).get('next')
-    if (next && next.startsWith('/') && !next.startsWith('//')) {
-      navigate(next, { replace: true })
-    } else {
-      navigate('/dashboard', { replace: true })
-    }
-    setLoading(false)
-  }
-
-  async function resendOtp() {
-    setResending(true)
-    setMessage(null)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      await sendOtp(session.access_token)
-      setMessage({ type: 'success', text: 'New code sent. Check your email.' })
-    }
-    setResending(false)
-  }
-
-  // ── OTP verification screen ───────────────────────────────────────────────
-
-  if (stage === 'otp') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-white px-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg overflow-hidden">
-              <img src="/favicon.png" alt="ParkPeace" className="w-full h-full object-cover" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">ParkPeace</h1>
-            <p className="text-gray-500 mt-1 text-sm">Smart QR alerts for your parked car</p>
-          </div>
-
-          <div className="card">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-full mb-3">
-                <ShieldCheck className="w-6 h-6 text-primary-600" />
-              </div>
-              <h2 className="text-base font-semibold text-gray-900">Check your email</h2>
-              <p className="text-xs text-gray-500 mt-1">
-                We sent a 6-digit verification code to <strong>{email}</strong>
-              </p>
-            </div>
-
-            <form onSubmit={handleOtpSubmit} className="space-y-4">
-              <div>
-                <label className="label">Verification Code</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="input text-center text-2xl tracking-widest font-mono"
-                  placeholder="000000"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                  autoFocus
-                  required
-                />
-              </div>
-
-              {message && (
-                <div className={`rounded-lg px-4 py-3 text-sm ${
-                  message.type === 'error'
-                    ? 'bg-red-50 text-red-700 border border-red-200'
-                    : 'bg-primary-50 text-primary-700 border border-primary-200'
-                }`}>
-                  {message.text}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="btn-primary w-full"
-              >
-                {loading
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</>
-                  : 'Verify & Sign In'}
-              </button>
-
-              <div className="flex items-center justify-between text-xs">
-                <button
-                  type="button"
-                  onClick={() => { setStage('credentials'); setOtp(''); setMessage(null) }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ← Back
-                </button>
-                <button
-                  type="button"
-                  onClick={resendOtp}
-                  disabled={resending}
-                  className="text-primary-600 hover:text-primary-800 transition-colors"
-                >
-                  {resending ? 'Sending…' : 'Resend code'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   // ── Credentials screen ────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Save, Bell, BellOff, Pencil, X, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react'
+import { Save, Bell, BellOff, Pencil, X, Loader2 } from 'lucide-react'
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
 import { supabase } from '../../lib/supabase'
@@ -34,20 +34,7 @@ export function ProfileForm({ profile, onSave }: Props) {
     typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'enabled' : 'idle'
   )
   const [notifError, setNotifError] = useState<string | null>(null)
-  const [otpEnabled, setOtpEnabled] = useState(true)
-  const [otpSaving, setOtpSaving] = useState(false)
 
-  // Sync otp_enabled from profile
-  useEffect(() => {
-    if (profile) setOtpEnabled(profile.otp_enabled ?? true)
-  }, [profile])
-
-  async function toggleOtp() {
-    setOtpSaving(true)
-    await supabase.from('profiles').update({ otp_enabled: !otpEnabled }).eq('id', profile!.id)
-    setOtpEnabled(!otpEnabled)
-    setOtpSaving(false)
-  }
   useEffect(() => {
     if (!profile) return
     setFullName(profile.full_name ?? '')
@@ -272,35 +259,6 @@ export function ProfileForm({ profile, onSave }: Props) {
         {notifError && (
           <p className="text-xs text-red-500 mt-2 break-all">{notifError}</p>
         )}
-      </div>
-
-      {/* Email OTP */}
-      <div className="card">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Email Verification (OTP)</h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {otpEnabled
-                ? 'A one-time code is sent to your email on every sign-in.'
-                : 'Email OTP is disabled. Sign-in requires only your password.'}
-            </p>
-          </div>
-          <button
-            onClick={toggleOtp}
-            disabled={otpSaving || !profile}
-            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
-              otpEnabled
-                ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}
-          >
-            {otpSaving
-              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
-              : otpEnabled
-                ? <><ShieldCheck className="w-3.5 h-3.5" /> Enabled</>
-                : <><ShieldOff className="w-3.5 h-3.5" /> Disabled</>}
-          </button>
-        </div>
       </div>
     </div>
   )
