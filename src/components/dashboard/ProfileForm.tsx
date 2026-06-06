@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Save, Bell, BellOff, Pencil, X, Loader2 } from 'lucide-react'
+import { Save, Bell, BellOff, Pencil, X } from 'lucide-react'
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
-import { supabase } from '../../lib/supabase'
 
 interface Props {
   profile: Profile | null
