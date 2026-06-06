@@ -119,9 +119,8 @@ serve(async (req) => {
 </body>
 </html>`
 
+    // Send OTP email via Resend
     const resendKey = Deno.env.get("RESEND_API_KEY")
-    let emailSent = false
-
     if (resendKey) {
       const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -136,35 +135,11 @@ serve(async (req) => {
           html: emailHtml,
         }),
       })
-      if (emailRes.ok) {
-        emailSent = true
-      } else {
-        const err = await emailRes.text()
-        console.error("Resend error, falling back to SMTP:", err)
+      if (!emailRes.ok) {
+        console.error("Resend error:", await emailRes.text())
       }
-    }
-
-    if (!emailSent) {
-      // Fallback: use Supabase built-in SMTP
-      const smtpRes = await fetch(
-        `${Deno.env.get("SUPABASE_URL")}/auth/v1/admin/users/${user.id}/send-email`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-            "Content-Type": "application/json",
-            "apikey": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-          },
-          body: JSON.stringify({
-            type: "email_otp",
-            subject: `ParkPeace — Verify your sign-in`,
-            body: emailHtml,
-          }),
-        }
-      )
-      if (!smtpRes.ok) {
-        console.error("SMTP fallback also failed:", await smtpRes.text())
-      }
+    } else {
+      console.log(`OTP for ${user.email}: ${code}`)
     }
 
     return new Response(JSON.stringify({ otpRequired: true, sent: true }), {

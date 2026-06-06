@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/I316427/Claude/CallHost/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/I316427/Claude/CallHost"
+    ]
+  }
+}

@@ -8,22 +8,12 @@ export function useAuth() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // Don't expose session while OTP is pending
-      if (sessionStorage.getItem('otp_pending') === 'true') {
-        setSession(null)
-      } else {
-        setSession(session)
-      }
+      setSession(session)
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Don't expose session while OTP is pending
-      if (sessionStorage.getItem('otp_pending') === 'true') {
-        setSession(null)
-      } else {
-        setSession(session)
-      }
+      setSession(session)
     })
 
     return () => subscription.unsubscribe()

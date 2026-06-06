@@ -45,9 +45,7 @@ function PasswordInput({
 
 export function AuthForm() {
   const [tab, setTab] = useState<Tab>('login')
-  const [stage, setStage] = useState<Stage>(() =>
-    sessionStorage.getItem('otp_pending') === 'true' ? 'otp' : 'credentials'
-  )
+  const [stage, setStage] = useState<Stage>('credentials')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -94,28 +92,15 @@ export function AuthForm() {
     setLoading(true)
 
     if (tab === 'login') {
-      // Set otp_pending BEFORE signing in so onAuthStateChange sees it immediately
-      sessionStorage.setItem('otp_pending', 'true')
-
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        sessionStorage.removeItem('otp_pending')
         setMessage({ type: 'error', text: error.message })
         setLoading(false)
         return
       }
 
-      // Check if OTP is required for this user
-      const otpRequired = await sendOtp(data.session.access_token)
-      if (otpRequired) {
-        setStage('otp')
-        setLoading(false)
-        return
-      }
-
-      // OTP disabled — clear flag and navigate
+      // OTP disabled — navigate directly
       sessionStorage.removeItem('otp_pending')
-      await supabase.auth.refreshSession()
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
         navigate(next, { replace: true })
