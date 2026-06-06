@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Save, Bell, BellOff, Pencil, X } from 'lucide-react'
+import { Save, Bell, BellOff, Pencil, X, Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
+import { supabase } from '../../lib/supabase'
 
 interface Props {
   profile: Profile | null
+  email?: string
   onSave: (updates: Partial<Omit<Profile, 'id'>>) => Promise<{ error: { message: string } | null | undefined }>
 }
 
@@ -17,7 +19,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   )
 }
 
-export function ProfileForm({ profile, onSave }: Props) {
+export function ProfileForm({ profile, email, onSave }: Props) {
   const [editing, setEditing] = useState(false)
 
   const [fullName, setFullName] = useState('')
@@ -33,8 +35,40 @@ export function ProfileForm({ profile, onSave }: Props) {
     typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'enabled' : 'idle'
   )
   const [notifError, setNotifError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
-  useEffect(() => {
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    setDeleteError('')
+    const { data: { session } } = await supabase.auth.getSession()
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        }
+      )
+      const data = await res.json()
+      if (!data.success) {
+        setDeleteError(data.error ?? 'Failed to delete account. Please try again.')
+        setDeleting(false)
+        return
+      }
+      // Sign out and redirect to home
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } catch {
+      setDeleteError('Could not delete account. Please try again.')
+      setDeleting(false)
+    }
+  }
     if (!profile) return
     setFullName(profile.full_name ?? '')
     setPhone(profile.phone ?? '')
@@ -117,6 +151,7 @@ export function ProfileForm({ profile, onSave }: Props) {
 
         {!editing ? (
           <div className="space-y-4">
+            <Field label="Email" value={email} />
             <Field label="Full Name" value={profile?.full_name} />
             <Field label="Phone Number" value={profile?.phone} />
             <Field label="WhatsApp Number" value={profile?.whatsapp_number} />
@@ -258,6 +293,72 @@ export function ProfileForm({ profile, onSave }: Props) {
         {notifError && (
           <p className="text-xs text-red-500 mt-2 break-all">{notifError}</p>
         )}
+      </div>
+
+      {/* Delete Account */}
+      <div className="card border border-red-100">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h2 className="text-base font-semibold text-red-700">Delete Account</h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Permanently deletes your account, all vehicles, scan history, and chat data. This cannot be undone.
+            </p>
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-800 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete my account
+              </button>
+            ) : (
+              <div className="mt-3 space-y-3">
+                <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-800">
+                  <strong>This will permanently delete:</strong>
+                  <ul className="mt-1 ml-3 list-disc space-y-0.5">
+                    <li>Your profile and contact details</li>
+                    <li>All your vehicle QR codes</li>
+                    <li>All scan history and chat sessions</li>
+                    <li>Your account login</li>
+                  </ul>
+                  <p className="mt-2 font-semibold">There is no way to recover this data.</p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">
+                    Type <strong>DELETE</strong> to confirm
+                  </label>
+                  <input
+                    type="text"
+                    className="input text-sm"
+                    placeholder="DELETE"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  />
+                </div>
+                {deleteError && (
+                  <p className="text-xs text-red-500">{deleteError}</p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText !== 'DELETE' || deleting}
+                    className="btn-danger text-sm flex items-center gap-1.5"
+                  >
+                    {deleting
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting…</>
+                      : <><Trash2 className="w-4 h-4" /> Delete Account</>}
+                  </button>
+                  <button
+                    onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); setDeleteError('') }}
+                    className="btn-secondary text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

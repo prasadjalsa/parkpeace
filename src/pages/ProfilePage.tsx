@@ -36,7 +36,7 @@ export function ProfilePage() {
         </div>
       </header>
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <ProfileForm profile={profile} onSave={saveProfile} />
+        <ProfileForm profile={profile} email={user.email ?? undefined} onSave={saveProfile} />
       </main>
     </div>
   )

@@ -14,11 +14,13 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("authorization") ?? ""
     const token = authHeader.replace("Bearer ", "")
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
 
+    // Verify the user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -27,46 +29,16 @@ serve(async (req) => {
       })
     }
 
-    const { code } = await req.json() as { code: string }
-    if (!code?.trim()) {
-      return new Response(JSON.stringify({ error: "Code is required" }), {
-        status: 400,
+    // Delete the user — cascades to profiles, qr_codes, scan_events, chat_sessions
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
+    if (deleteError) {
+      return new Response(JSON.stringify({ error: deleteError.message }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
-    // Find a valid unused OTP for this user
-    const { data: challenge, error: fetchError } = await supabase
-      .from("otp_challenges")
-      .select("id, code, expires_at, used")
-      .eq("user_id", user.id)
-      .eq("used", false)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
-
-    if (fetchError || !challenge) {
-      return new Response(JSON.stringify({ error: "Invalid or expired code." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
-    }
-
-    if (challenge.code !== code.trim()) {
-      return new Response(JSON.stringify({ error: "Invalid code. Please try again." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      })
-    }
-
-    // Mark as used
-    await supabase
-      .from("otp_challenges")
-      .update({ used: true })
-      .eq("id", challenge.id)
-
-    return new Response(JSON.stringify({ verified: true }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (err) {
