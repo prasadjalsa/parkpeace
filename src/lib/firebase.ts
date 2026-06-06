@@ -17,6 +17,9 @@ export async function requestFCMToken(): Promise<{ token: string } | { error: st
   if (!messaging) return { error: 'Firebase Messaging not available in this browser.' }
   try {
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    console.log('SW state:', registration.active?.state)
+    console.log('VAPID key length:', import.meta.env.VITE_FIREBASE_VAPID_KEY?.length)
+    console.log('VAPID key prefix:', import.meta.env.VITE_FIREBASE_VAPID_KEY?.slice(0, 10))
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
       serviceWorkerRegistration: registration,
