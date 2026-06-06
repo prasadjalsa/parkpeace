@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 
 interface Props {
   qrCodeId: string
+  template?: 'car' | 'home'
 }
 
 type State = 'form' | 'loading' | 'success' | 'error'
@@ -24,7 +25,8 @@ function buildWhatsAppUrl(phone: string, carName: string, scannerName: string, s
   return `https://wa.me/${digits}?text=${text}`
 }
 
-export function ContactSection({ qrCodeId }: Props) {
+export function ContactSection({ qrCodeId, template = 'car' }: Props) {
+  const isHome = template === 'home'
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [note, setNote] = useState('')
@@ -138,11 +140,11 @@ export function ContactSection({ qrCodeId }: Props) {
       <div>
         <div className="text-center py-6">
           <CheckCircle className="w-14 h-14 text-primary-500 mx-auto mb-3" />
-          <p className="font-semibold text-gray-900 text-lg">Owner Notified</p>
+          <p className="font-semibold text-gray-900 text-lg">{isHome ? 'Resident Notified' : 'Owner Notified'}</p>
           <p className="text-gray-500 text-sm mt-1">
-            The car owner has received your message via push notification.
+            {isHome ? 'The resident has received your message via push notification.' : 'The car owner has received your message via push notification.'}
           </p>
-          <p className="text-gray-400 text-xs mt-1">WhatsApp has been opened if the owner has it set up.</p>
+          <p className="text-gray-400 text-xs mt-1">{isHome ? 'WhatsApp has been opened if the resident has it set up.' : 'WhatsApp has been opened if the owner has it set up.'}</p>
         </div>
         {chatSessionId && !notifyEnabled && (
           <div className="mb-3 flex flex-col items-center gap-2">
@@ -157,7 +159,7 @@ export function ContactSection({ qrCodeId }: Props) {
               {notifyLoading
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <Bell className="w-4 h-4" />}
-              Get notified when owner replies
+              Get notified when {isHome ? 'resident' : 'owner'} replies
             </button>
             {notifyError && (
               <p className="text-xs text-red-500 text-center px-2">{notifyError}</p>
@@ -177,6 +179,7 @@ export function ContactSection({ qrCodeId }: Props) {
               sessionId={chatSessionId}
               senderRole="scanner"
               scannerName={name || undefined}
+              template={template}
             />
           </div>
         )}
@@ -214,7 +217,7 @@ export function ContactSection({ qrCodeId }: Props) {
         <textarea
           className="input resize-none"
           rows={3}
-          placeholder="e.g. Your car is blocking my driveway. Please move it when possible."
+          placeholder={isHome ? 'e.g. Hi, I am here for my appointment. Please let me in.' : 'e.g. Your car is blocking my driveway. Please move it when possible.'}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           required
@@ -236,7 +239,7 @@ export function ContactSection({ qrCodeId }: Props) {
         {state === 'loading' ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
         ) : (
-          <><MessageSquare className="w-4 h-4" /> Notify Owner</>
+          <><MessageSquare className="w-4 h-4" /> {isHome ? 'Notify Resident' : 'Notify Owner'}</>
         )}
       </button>
     </form>

@@ -20,6 +20,7 @@ interface Props {
   sessionId: string
   senderRole: 'scanner' | 'owner'
   scannerName?: string
+  template?: 'car' | 'home'
   onExpired?: () => void
 }
 
@@ -31,7 +32,8 @@ function formatCountdown(expiresAt: string): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
-export function ChatWindow({ sessionId, senderRole, scannerName, onExpired }: Props) {
+export function ChatWindow({ sessionId, senderRole, scannerName, template = 'car', onExpired }: Props) {
+  const isHome = template === 'home'
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [session, setSession] = useState<ChatSession | null>(null)
   const [expired, setExpired] = useState(false)
@@ -248,7 +250,7 @@ export function ChatWindow({ sessionId, senderRole, scannerName, onExpired }: Pr
       <div className="flex items-center justify-between px-4 py-2.5 bg-primary-600 text-white shrink-0">
         <div>
           <p className="text-sm font-semibold">
-            {senderRole === 'owner' ? `Chat with ${displayName}` : 'Live Chat with Owner'}
+            {senderRole === 'owner' ? `Chat with ${displayName}` : isHome ? 'Live Chat with Resident' : 'Live Chat with Owner'}
           </p>
         </div>
         {countdown && (

@@ -85,7 +85,7 @@ export function ScanPage() {
               </p>
             </div>
           </div>
-          <ContactSection qrCodeId={qr!.id} />
+          <ContactSection qrCodeId={qr!.id} template={qr!.template} />
         </div>
 
         {/* Emergency — collapsible */}
@@ -107,7 +107,7 @@ export function ScanPage() {
           </button>
           {emergencyOpen && (
             <div className="p-5 bg-white">
-              <EmergencySection qrCodeId={qr!.id} />
+              <EmergencySection qrCodeId={qr!.id} template={qr!.template} />
             </div>
           )}
         </div>

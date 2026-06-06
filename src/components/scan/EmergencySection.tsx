@@ -3,11 +3,13 @@ import { AlertTriangle, Phone, Loader2 } from 'lucide-react'
 
 interface Props {
   qrCodeId: string
+  template?: 'car' | 'home'
 }
 
 type State = 'form' | 'loading' | 'calling' | 'error'
 
-export function EmergencySection({ qrCodeId }: Props) {
+export function EmergencySection({ qrCodeId, template = 'car' }: Props) {
+  const isHome = template === 'home'
   const [name, setName] = useState('')
   const [situation, setSituation] = useState('')
   const [state, setState] = useState<State>('form')
@@ -69,7 +71,7 @@ export function EmergencySection({ qrCodeId }: Props) {
       <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-lg p-3">
         <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
         <p className="text-xs text-red-700">
-          Only use this for genuine emergencies (accident, break-in, medical). The emergency
+          Only use this for genuine emergencies {isHome ? '(fire, break-in, medical)' : '(accident, break-in, medical)'}. The emergency
           contact will be called on your phone.
         </p>
       </div>
@@ -91,7 +93,7 @@ export function EmergencySection({ qrCodeId }: Props) {
         <textarea
           className="input resize-none"
           rows={3}
-          placeholder="e.g. The car has been hit. There is visible damage to the left side."
+          placeholder={isHome ? 'e.g. There is a fire alarm going off in the building.' : 'e.g. The car has been hit. There is visible damage to the left side.'}
           value={situation}
           onChange={(e) => setSituation(e.target.value)}
           required
