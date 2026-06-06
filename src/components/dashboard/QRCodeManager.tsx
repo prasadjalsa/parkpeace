@@ -174,7 +174,7 @@ export function QRCodeManager({ userId }: Props) {
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-500">{codes.length} vehicle{codes.length !== 1 ? 's' : ''}</p>
         <button onClick={() => setShowModal(true)} className="btn-primary py-2 text-xs">
-          <Plus className="w-4 h-4" /> Add Vehicle
+          <Plus className="w-4 h-4" /> Add QR Code
         </button>
       </div>
 
@@ -242,7 +242,7 @@ export function QRCodeManager({ userId }: Props) {
         </div>
       )}
 
-      {/* Add Vehicle modal */}
+      {/* Add QR Code modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-6">
