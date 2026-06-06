@@ -240,9 +240,14 @@ export function ProfileForm({ profile, onSave }: Props) {
             <p className="text-xs text-gray-400 mt-0.5">Get notified when someone scans your QR (via Firebase). On iPhone, add this site to your Home Screen first.</p>
           </div>
           {notifStatus === 'enabled' ? (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 px-3 py-1.5 rounded-full">
+            <button
+              type="button"
+              onClick={() => { setNotifStatus('idle'); setNotifError(null) }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-full transition-colors"
+              title="Click to refresh token on this device"
+            >
               <Bell className="w-3.5 h-3.5" /> Enabled
-            </span>
+            </button>
           ) : notifStatus === 'denied' ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">
               <BellOff className="w-3.5 h-3.5" /> Blocked
