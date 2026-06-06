@@ -69,6 +69,8 @@ export function ProfileForm({ profile, email, onSave }: Props) {
       setDeleting(false)
     }
   }
+
+  useEffect(() => {
     if (!profile) return
     setFullName(profile.full_name ?? '')
     setPhone(profile.phone ?? '')
