@@ -4,7 +4,7 @@ import { LogOut, QrCode, Clock, UserCircle, Mail, X, Megaphone } from 'lucide-re
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
-import { initForegroundMessaging } from '../lib/firebase'
+import { initForegroundMessaging, clearCorruptedFCMState } from '../lib/firebase'
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
 import { DeveloperInbox } from '../components/dashboard/DeveloperInbox'
@@ -57,6 +57,9 @@ export function DashboardPage() {
 
   // Handle foreground FCM messages — increment unread badge in real time
   useEffect(() => {
+    // Clear any corrupted Firebase IndexedDB state left by the 2026-06-06 outage.
+    // Runs once per browser profile then self-disables via localStorage gate.
+    clearCorruptedFCMState()
     initForegroundMessaging()
     function onNewScan() { setUnreadCount((n) => n + 1) }
     window.addEventListener('parkpeace:new-scan', onNewScan)

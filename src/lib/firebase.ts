@@ -1,5 +1,40 @@
 import { initializeApp, getApps } from 'firebase/app'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
+
+// One-time migration: clears corrupted Firebase Installations IndexedDB state
+// left behind by the FCM API outage + version rollback on 2026-06-06.
+// Runs once per browser profile, gates itself with localStorage.
+export async function clearCorruptedFCMState(): Promise<void> {
+  const CLEARED_KEY = 'fcm_idb_cleared_20260606'
+  if (localStorage.getItem(CLEARED_KEY)) return
+  try {
+    // Unregister any stale service worker for this scope
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      for (const reg of regs) {
+        if (reg.scope.includes(window.location.origin)) {
+          await reg.unregister()
+        }
+      }
+    }
+    // Delete Firebase Installations and Messaging IndexedDB databases
+    const dbsToClear = ['firebase-installations-database', 'firebase-messaging-database']
+    await Promise.allSettled(
+      dbsToClear.map(
+        (name) =>
+          new Promise<void>((resolve, reject) => {
+            const req = indexedDB.deleteDatabase(name)
+            req.onsuccess = () => resolve()
+            req.onerror = () => reject(req.error)
+            req.onblocked = () => resolve() // treat blocked as non-fatal
+          })
+      )
+    )
+    localStorage.setItem(CLEARED_KEY, '1')
+  } catch (_) {
+    // Non-fatal: token registration will surface its own error if still broken
+  }
+}
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,

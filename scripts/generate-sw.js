@@ -27,8 +27,8 @@ const config = {
   appId: process.env.VITE_FIREBASE_APP_ID,
 }
 
-const content = `importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js')
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js')
+const content = `importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js')
 
 firebase.initializeApp(${JSON.stringify(config, null, 2)})
 
