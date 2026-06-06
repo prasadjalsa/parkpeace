@@ -138,7 +138,7 @@ export function DashboardPage() {
         <div className="max-w-2xl mx-auto px-4">
           <nav className="flex gap-1">
             {([
-              { id: 'vehicles' as Tab, label: 'My Vehicles', icon: <QrCode className="w-4 h-4" /> },
+              { id: 'vehicles' as Tab, label: 'My QR Codes', icon: <QrCode className="w-4 h-4" /> },
               { id: 'history' as Tab, label: 'Scan History', icon: <Clock className="w-4 h-4" /> },
               ...(profile?.is_developer ? [{ id: 'inbox' as Tab, label: 'Inbox', icon: <Mail className="w-4 h-4" /> }] : []),
             ]).map((tab) => (

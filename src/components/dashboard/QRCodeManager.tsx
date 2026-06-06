@@ -74,7 +74,7 @@ export function QRCodeManager({ userId }: Props) {
   }
 
   async function deleteCode(id: string) {
-    if (!confirm('Delete this vehicle QR? Anyone with a printed copy will get a "not found" page.')) return
+    if (!confirm('Delete this QR code? Anyone with a printed copy will get a "not found" page.')) return
     setDeleting(id)
     await supabase.from('qr_codes').delete().eq('id', id)
     setCodes((prev) => prev.filter((c) => c.id !== id))
@@ -181,8 +181,8 @@ export function QRCodeManager({ userId }: Props) {
       {codes.length === 0 ? (
         <div className="card text-center py-12">
           <QrCode className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm font-medium">No vehicles yet</p>
-          <p className="text-gray-400 text-xs mt-1">Add one for each car or vehicle you park</p>
+          <p className="text-gray-500 text-sm font-medium">No QR codes yet</p>
+          <p className="text-gray-400 text-xs mt-1">Add one for each car, vehicle, home or flat</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -283,7 +283,7 @@ export function QRCodeManager({ userId }: Props) {
                 </div>
               </div>
               <div>
-                <label className="label">{newTemplate === 'home' ? 'Home or Unit Name' : 'Vehicle Name'}</label>
+                <label className="label">{newTemplate === 'home' ? 'Home or Unit Name' : 'Car or Vehicle Name'}</label>
                 <input
                   ref={modalInputRef}
                   type="text"
@@ -343,7 +343,7 @@ export function QRCodeManager({ userId }: Props) {
         </div>
       )}
 
-      {/* Per-vehicle scan history modal */}
+      {/* Per-QR scan history modal */}
       {historyFor && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg flex flex-col max-h-[80vh]">

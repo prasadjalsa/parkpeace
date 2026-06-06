@@ -25,10 +25,10 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>1. Register</strong> — Create a free account with your email and password on the sign-in page.</p>
           <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Your email address is shown at the top (read-only). Add your full name and phone number (both required — phone is stored for identification). Optionally add your WhatsApp number and emergency contact. A privacy confirmation is required before adding WhatsApp — your number will be visible to scanners in WhatsApp chat. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR. Once enabled, tap the green <strong>Enabled</strong> button again anytime to refresh the notification token on that device.</p>
-          <p><strong>4. Add a vehicle</strong> — Go to the <strong>My Vehicles</strong> tab and tap <strong>Add Vehicle</strong>. Give it a name (e.g. "Red Swift"). A QR code is generated automatically.</p>
+          <p><strong>4. Add a QR Code</strong> — Go to the <strong>My QR Codes</strong> tab and tap <strong>Add QR Code</strong>. Choose whether it's for a <strong>Car/Vehicle</strong> or <strong>Home/Flat</strong> — each generates a different card design. Pick a header colour from 6 presets or choose a custom colour. Give it a name and tap Add.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
           <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. Both you and the scanner receive push notifications for every new chat message. The scanner can also tap <strong>"Get notified when owner replies"</strong> to opt in to reply notifications (iPhone users must add the page to Home Screen first). If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
-          <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any vehicle card to see only that vehicle's history. Use <strong>Clear History</strong> to delete events by date range. A red badge on the tab shows how many new scans you haven't viewed yet.</p>
+          <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any QR code card to see only that QR code's history. Use <strong>Clear History</strong> to delete events by date range. A red badge on the tab shows how many new scans you haven't viewed yet.</p>
         </div>
       )
     case 'register':
@@ -152,12 +152,16 @@ function SectionContent({ id }: { id: Section }) {
             <p className="mt-1">The event is logged with the scanner's name and situation, you receive a push notification, and the scanner's phone opens the dialer to call your emergency contact directly. No server cost — the call is made from the scanner's own phone.</p>
           </div>
           <div>
-            <p className="font-semibold text-gray-800">Can I have multiple vehicles?</p>
-            <p className="mt-1">Yes. Add one QR code per vehicle in the My Vehicles tab. Each has its own scan history.</p>
+            <p className="font-semibold text-gray-800">Can I have multiple QR codes?</p>
+            <p className="mt-1">Yes. Add one QR code per vehicle, home, or flat in the My QR Codes tab. Each has its own scan history.</p>
           </div>
           <div>
-            <p className="font-semibold text-gray-800">How do I see who contacted me for a specific car?</p>
-            <p className="mt-1">Tap the clock icon on any vehicle card in My Vehicles to see only that vehicle's scan history. You can also see all scans across all vehicles in the Scan History tab.</p>
+            <p className="font-semibold text-gray-800">Can I use ParkPeace for my home or flat?</p>
+            <p className="mt-1">Yes. When adding a QR code, choose <strong>Home/Flat</strong> as the type. The downloaded card uses a different design and text suited for a home entrance. Place the QR at your door or gate so visitors or delivery staff can notify you.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">How do I see who contacted me for a specific QR code?</p>
+            <p className="mt-1">Tap the clock icon on any QR code card in My QR Codes to see only that QR code's scan history. You can also see all scans across all QR codes in the Scan History tab.</p>
           </div>
           <div>
             <p className="font-semibold text-gray-800">How do I clear old scan history?</p>
@@ -279,7 +283,7 @@ function SectionContent({ id }: { id: Section }) {
 
           <div className="bg-gray-50 rounded-lg p-3 space-y-1">
             <p className="font-semibold text-gray-700 text-xs">Note</p>
-            <p className="text-xs text-gray-600">Anyone who scans a QR code that was previously linked to your account will see a "QR Code Not Found" message. If you printed QR codes and placed them on vehicles, remove them before deleting your account.</p>
+            <p className="text-xs text-gray-600">Anyone who scans a QR code that was previously linked to your account will see a "QR Code Not Found" message. If you printed QR codes and placed them on vehicles or at home entrances, remove them before deleting your account.</p>
           </div>
         </div>
       )
@@ -300,7 +304,7 @@ function SectionContent({ id }: { id: Section }) {
           <div>
             <p className="font-semibold text-gray-800 mb-1">Features</p>
             <ul className="list-disc list-inside space-y-1 ml-1">
-              <li>Owner dashboard: profile, multiple vehicles, scan history</li>
+              <li>Owner dashboard: profile, multiple QR codes (car or home), scan history</li>
               <li>Profile view/edit mode — shows saved values, edit button to modify</li>
               <li>Profile accessible via a styled clickable button (name + icon) in the header</li>
               <li>Register: confirm password field with live match indicator; eye icon to show/hide password</li>
@@ -316,7 +320,8 @@ function SectionContent({ id }: { id: Section }) {
               <li>Contact Developer form in Help panel — logged-in users send feedback with instant push to developer</li>
               <li>Developer Inbox tab (developer account only) — view and bulk-delete user messages</li>
               <li>Broadcast push notifications with in-app announcement popup when tapped</li>
-              <li>Security hardening: persistent DB-backed rate limiting, CSP headers, RLS fixes</li>
+              <li>QR template selector — Car/Vehicle or Home/Flat with distinct card designs and colours</li>
+              <li>QR header colour picker — 6 presets + custom colour, auto-selects readable text colour</li>
             </ul>
           </div>
           <div>
