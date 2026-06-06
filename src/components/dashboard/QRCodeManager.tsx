@@ -169,10 +169,55 @@ export function QRCodeManager({ userId }: Props) {
     return <div className="text-center py-12 text-gray-400 text-sm">Loading…</div>
   }
 
+  function renderCard(code: QRCode, url: string) {
+    return (
+      <div key={code.id} className="card flex flex-col items-center gap-4">
+        <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+          <QRCodeCanvas
+            id={`qr-${code.id}`}
+            value={url}
+            size={160}
+            level="M"
+            includeMargin
+          />
+        </div>
+        <div className="text-center">
+          <p className="font-semibold text-gray-900">{code.name}</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Added {new Date(code.created_at).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex gap-2 w-full">
+          <button
+            onClick={() => downloadQR(code.id, code.name, code.template, code.header_color, getTextColor(code.header_color))}
+            className="btn-secondary flex-1 py-2 text-xs"
+          >
+            <Download className="w-3.5 h-3.5" /> Download
+          </button>
+          <button
+            onClick={() => setHistoryFor(code)}
+            className="btn-secondary py-2 text-xs px-3"
+            title="View scan history"
+          >
+            <Clock className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => deleteCode(code.id)}
+            disabled={deleting === code.id}
+            className="p-2.5 rounded-lg border border-gray-200 text-red-400 hover:bg-red-50 hover:border-red-200 transition-colors"
+            aria-label="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-500">{codes.length} vehicle{codes.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500">{codes.length} QR code{codes.length !== 1 ? 's' : ''}</p>
         <button onClick={() => setShowModal(true)} className="btn-primary py-2 text-xs">
           <Plus className="w-4 h-4" /> Add QR Code
         </button>
@@ -185,61 +230,41 @@ export function QRCodeManager({ userId }: Props) {
           <p className="text-gray-400 text-xs mt-1">Add one for each car, vehicle, home or flat</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {codes.map((code) => {
-            const url = `${window.location.origin}/scan/${code.id}`
-            return (
-              <div key={code.id} className="card flex flex-col items-center gap-4">
-                <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                  <QRCodeCanvas
-                    id={`qr-${code.id}`}
-                    value={url}
-                    size={160}
-                    level="M"
-                    includeMargin
-                  />
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold text-gray-900">{code.name}</p>
-                  <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1 ${
-                    code.template === 'home'
-                      ? 'bg-primary-50 text-primary-600'
-                      : 'bg-green-50 text-green-700'
-                  }`}>
-                    {code.template === 'home' ? <Home className="w-3 h-3" /> : <Car className="w-3 h-3" />}
-                    {code.template === 'home' ? 'Home / Flat' : 'Car / Vehicle'}
-                  </span>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Added {new Date(code.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-2 w-full">
-                  <button
-                    onClick={() => downloadQR(code.id, code.name, code.template, code.header_color, getTextColor(code.header_color))}
-                    className="btn-secondary flex-1 py-2 text-xs"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Download
-                  </button>
-                  <button
-                    onClick={() => setHistoryFor(code)}
-                    className="btn-secondary py-2 text-xs px-3"
-                    title="View scan history"
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => deleteCode(code.id)}
-                    disabled={deleting === code.id}
-                    className="p-2.5 rounded-lg border border-gray-200 text-red-400 hover:bg-red-50 hover:border-red-200 transition-colors"
-                    aria-label="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+        <>
+          {/* Car / Vehicle group */}
+          {codes.filter(c => c.template !== 'home').length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Car className="w-4 h-4 text-green-600" />
+                <h3 className="text-sm font-semibold text-gray-700">Cars &amp; Vehicles</h3>
+                <span className="text-xs text-gray-400">({codes.filter(c => c.template !== 'home').length})</span>
               </div>
-            )
-          })}
-        </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {codes.filter(c => c.template !== 'home').map((code) => {
+                  const url = `${window.location.origin}/scan/${code.id}`
+                  return renderCard(code, url)
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Home / Flat group */}
+          {codes.filter(c => c.template === 'home').length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Home className="w-4 h-4 text-primary-600" />
+                <h3 className="text-sm font-semibold text-gray-700">Homes &amp; Flats</h3>
+                <span className="text-xs text-gray-400">({codes.filter(c => c.template === 'home').length})</span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {codes.filter(c => c.template === 'home').map((code) => {
+                  const url = `${window.location.origin}/scan/${code.id}`
+                  return renderCard(code, url)
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Add QR Code modal */}

@@ -8,6 +8,7 @@ import { EmergencySection } from '../components/scan/EmergencySection'
 interface QRInfo {
   id: string
   name: string
+  template: 'car' | 'home'
 }
 
 export function ScanPage() {
@@ -21,7 +22,7 @@ export function ScanPage() {
     if (!qrId) { setNotFound(true); setLoading(false); return }
     supabase
       .from('qr_codes')
-      .select('id, name')
+      .select('id, name, template')
       .eq('id', qrId)
       .single()
       .then(({ data, error }) => {
@@ -53,6 +54,8 @@ export function ScanPage() {
     )
   }
 
+  const isHome = qr?.template === 'home'
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -67,15 +70,19 @@ export function ScanPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 -mt-2 pb-12 space-y-4">
-        {/* Contact Owner */}
+        {/* Contact card */}
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 bg-primary-50 rounded-lg overflow-hidden flex items-center justify-center">
               <img src="/favicon.png" alt="ParkPeace" className="w-6 h-6 object-cover" />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900 text-sm">Contact Owner</h2>
-              <p className="text-xs text-gray-400">Send a message to the car owner</p>
+              <h2 className="font-semibold text-gray-900 text-sm">
+                {isHome ? 'Notify Resident' : 'Contact Owner'}
+              </h2>
+              <p className="text-xs text-gray-400">
+                {isHome ? 'Send a message to the resident' : 'Send a message to the car owner'}
+              </p>
             </div>
           </div>
           <ContactSection qrCodeId={qr!.id} />
@@ -89,7 +96,9 @@ export function ScanPage() {
           >
             <div>
               <span className="font-semibold text-red-700 text-sm">Emergency</span>
-              <p className="text-xs text-red-500 mt-0.5">Only for genuine emergencies</p>
+              <p className="text-xs text-red-500 mt-0.5">
+                {isHome ? 'Only for genuine emergencies (fire, break-in, medical)' : 'Only for genuine emergencies'}
+              </p>
             </div>
             {emergencyOpen
               ? <ChevronUp className="w-4 h-4 text-red-500 shrink-0" />
@@ -105,11 +114,13 @@ export function ScanPage() {
 
         <p className="text-center text-xs text-gray-300">Powered by ParkPeace</p>
 
-        {/* Be a user CTA */}
+        {/* CTA */}
         <div className="rounded-xl bg-primary-50 border border-primary-100 px-5 py-4 text-center">
           <p className="text-sm font-semibold text-primary-800">Liked the idea?</p>
           <p className="text-xs text-primary-600 mt-1 mb-3">
-            Place your own QR on your car and get instant alerts when someone needs to reach you.
+            {isHome
+              ? 'Get instant alerts when guests arrive at your home.'
+              : 'Get instant alerts when someone needs to reach your car.'}
           </p>
           <a
             href="/"
