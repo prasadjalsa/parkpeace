@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound, MessageSquare, Mail } from 'lucide-react'
+import { ChevronDown, ChevronUp, BookOpen, UserPlus, Bell, HelpCircle, Layers, X, Smartphone, KeyRound, MessageSquare, Mail, Trash2 } from 'lucide-react'
 import { ContactDeveloperForm } from '../dashboard/ContactDeveloper'
 
-type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'chat' | 'contact' | 'buildplan'
+type Section = 'howto' | 'register' | 'notifications' | 'homescreen' | 'faq' | 'password' | 'chat' | 'contact' | 'deleteaccount' | 'buildplan'
 
 const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'howto', label: 'How to Use', icon: <BookOpen className="w-4 h-4" /> },
@@ -13,6 +13,7 @@ const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'password', label: 'Password Recovery', icon: <KeyRound className="w-4 h-4" /> },
   { id: 'chat', label: 'Live Chat', icon: <MessageSquare className="w-4 h-4" /> },
   { id: 'contact', label: 'Contact Developer', icon: <Mail className="w-4 h-4" /> },
+  { id: 'deleteaccount', label: 'Delete Account', icon: <Trash2 className="w-4 h-4" /> },
   { id: 'buildplan', label: 'Build Plan', icon: <Layers className="w-4 h-4" /> },
 ]
 
@@ -22,8 +23,8 @@ function SectionContent({ id }: { id: Section }) {
       return (
         <div className="space-y-3 text-sm text-gray-600">
           <p><strong>1. Register</strong> — Create a free account with your email and password on the sign-in page.</p>
-          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Add your full name and phone number (both required — phone is stored for identification). Optionally add your WhatsApp number and emergency contact. A privacy confirmation is required before adding WhatsApp — your number will be visible to scanners in WhatsApp chat. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
-          <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR.</p>
+          <p><strong>2. Set up your profile</strong> — Tap the <strong>profile button</strong> (your name, top-right) on the dashboard to open Profile. Your email address is shown at the top (read-only). Add your full name and phone number (both required — phone is stored for identification). Optionally add your WhatsApp number and emergency contact. A privacy confirmation is required before adding WhatsApp — your number will be visible to scanners in WhatsApp chat. Tap <strong>Edit</strong> to make changes, then <strong>Save Profile</strong>.</p>
+          <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR. Once enabled, tap the green <strong>Enabled</strong> button again anytime to refresh the notification token on that device.</p>
           <p><strong>4. Add a vehicle</strong> — Go to the <strong>My Vehicles</strong> tab and tap <strong>Add Vehicle</strong>. Give it a name (e.g. "Red Swift"). A QR code is generated automatically.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
           <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. Both you and the scanner receive push notifications for every new chat message. The scanner can also tap <strong>"Get notified when owner replies"</strong> to opt in to reply notifications (iPhone users must add the page to Home Screen first). If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
@@ -59,6 +60,7 @@ function SectionContent({ id }: { id: Section }) {
             <p><strong>2.</strong> In the <strong>Push Notifications</strong> section, tap <strong>Enable</strong>.</p>
             <p><strong>3.</strong> When the browser asks for permission, tap <strong>Allow</strong>.</p>
             <p><strong>4.</strong> The button turns green — notifications are active on this device.</p>
+            <p><strong>5.</strong> Tap the green <strong>Enabled</strong> button anytime to refresh the token on that device — useful if you switch browsers or clear browser data.</p>
             <p className="text-xs text-gray-400 mt-1">Each device must enable notifications separately. The token is tied to the browser and device.</p>
           </div>
 
@@ -248,6 +250,37 @@ function SectionContent({ id }: { id: Section }) {
         <div className="space-y-4">
           <p className="text-sm text-gray-500">You must be signed in to send feedback. Your email is included automatically so the developer can follow up. Messages go to the Developer Inbox and a push notification is sent to the developer instantly.</p>
           <ContactDeveloperForm />
+        </div>
+      )
+    case 'deleteaccount':
+      return (
+        <div className="space-y-4 text-sm text-gray-600">
+          <p>You can permanently delete your account from the <strong>Profile page</strong> — scroll to the bottom and tap <strong>Delete my account</strong>.</p>
+
+          <div className="bg-red-50 rounded-lg p-3 space-y-1 border border-red-100">
+            <p className="font-semibold text-red-700 text-xs">⚠️ This permanently deletes:</p>
+            <ul className="text-xs text-red-700 list-disc list-inside ml-1 space-y-0.5">
+              <li>Your profile and contact details</li>
+              <li>All your vehicle QR codes</li>
+              <li>All scan history and chat sessions</li>
+              <li>Your account login</li>
+            </ul>
+            <p className="text-xs text-red-700 mt-1 font-semibold">There is no way to recover this data after deletion.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-gray-800 mb-1">Steps to delete your account</p>
+            <p><strong>1.</strong> Go to your <strong>Profile</strong> (tap your name, top-right on the dashboard).</p>
+            <p><strong>2.</strong> Scroll to the bottom and tap <strong>Delete my account</strong>.</p>
+            <p><strong>3.</strong> Read the confirmation warning carefully.</p>
+            <p><strong>4.</strong> Type <strong>DELETE</strong> in the confirmation field.</p>
+            <p><strong>5.</strong> Tap <strong>Delete Account</strong> — your account and all data are permanently removed.</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+            <p className="font-semibold text-gray-700 text-xs">Note</p>
+            <p className="text-xs text-gray-600">Anyone who scans a QR code that was previously linked to your account will see a "QR Code Not Found" message. If you printed QR codes and placed them on vehicles, remove them before deleting your account.</p>
+          </div>
         </div>
       )
     case 'buildplan':
