@@ -226,8 +226,7 @@ serve(async (req) => {
 
     const sa = JSON.parse(serviceAccountJson)
     const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://parkpeace.vercel.app"
-    const ownerChatUrl = `${appOrigin}/chat/${sessionId}`
-    const scannerChatUrl = `${appOrigin}/scan/${session.qr_code_id}`
+    const chatUrl = `${appOrigin}/chat/${sessionId}`
 
     if (senderRole === "scanner") {
       // Scanner sent a message → notify the owner
@@ -246,7 +245,7 @@ serve(async (req) => {
           preview,
           sa.project_id,
           accessToken,
-          { chatUrl: ownerChatUrl },
+          { chatUrl },
         )
       }
     } else {
@@ -260,7 +259,7 @@ serve(async (req) => {
           preview,
           sa.project_id,
           accessToken,
-          { chatUrl: scannerChatUrl },
+          { chatUrl },
         )
       }
     }
