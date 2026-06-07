@@ -27,7 +27,7 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR. Once enabled, tap the green <strong>Enabled</strong> button again anytime to refresh the notification token on that device.</p>
           <p><strong>4. Add a QR Code</strong> — Go to the <strong>My QR Codes</strong> tab and tap <strong>Add QR Code</strong>. Choose whether it's for a <strong>Car/Vehicle</strong> or <strong>Home/Flat</strong> — each generates a different card design. Pick a header colour from 6 presets or choose a custom colour. Give it a name and tap Add.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
-          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. Both you and the scanner can exchange messages in real time. Due to mobile browser restrictions, the scanner will not receive push notifications for chat replies — they need to keep the page open to see new messages. If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
+          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. You receive a push notification for every chat message the scanner sends. Due to mobile browser restrictions, the scanner cannot receive notifications for your replies — they need to keep the page open. If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
           <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any QR code card to see only that QR code's history. Use <strong>Clear History</strong> to delete events by date range. A red badge on the tab shows how many new scans you haven't viewed yet.</p>
         </div>
       )
@@ -65,8 +65,8 @@ function SectionContent({ id }: { id: Section }) {
           </div>
 
           <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-            <p className="font-semibold text-gray-700 text-xs">Reply notifications for scanners</p>
-            <p className="text-xs text-gray-600">Android users receive reply notifications automatically in the browser — no extra setup needed. iPhone users must add this page to their Home Screen first (Apple limitation — see the Add to Home Screen tab).</p>
+            <p className="font-semibold text-gray-700 text-xs">Chat reply notifications</p>
+            <p className="text-xs text-gray-600">As the owner, you receive a push notification for every chat message the scanner sends. The scanner does <strong>not</strong> receive push notifications for your replies — due to mobile browser restrictions, they need to keep the scan page open to see new messages.</p>
           </div>
 
           <div className="bg-blue-50 rounded-lg p-3 space-y-1">
@@ -135,6 +135,18 @@ function SectionContent({ id }: { id: Section }) {
     case 'faq':
       return (
         <div className="space-y-4 text-sm text-gray-600">
+          <div>
+            <p className="font-semibold text-gray-800">Do I get notified when the scanner replies in chat?</p>
+            <p className="mt-1">Yes. As the owner, you receive a push notification for every message the scanner sends. The scanner does not receive push notifications for your replies — due to mobile browser restrictions, they need to keep the scan page open to see new messages.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">What are the different QR code types?</p>
+            <p className="mt-1">When creating a QR code, choose <strong>Car / Vehicle</strong> or <strong>Home / Flat</strong>. Each generates a different card design and uses appropriate text on the scan page — car-specific language for vehicles, and home/visitor language for residences.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">Can I customise my QR card?</p>
+            <p className="mt-1">Yes. When adding a QR code, choose a header colour from 6 presets or pick any custom colour. The text colour (white or black) is automatically selected for readability. QR codes are grouped by type in the My QR Codes tab.</p>
+          </div>
           <div>
             <p className="font-semibold text-gray-800">Does the scanner need an account?</p>
             <p className="mt-1">No. Anyone who scans the QR code can contact you without signing in.</p>
@@ -309,7 +321,7 @@ function SectionContent({ id }: { id: Section }) {
               <li>Register: confirm password field with live match indicator; eye icon to show/hide password</li>
               <li>Live chat: 24h ephemeral chat session created on contact — scanner chats inline, owner joins via notification tap or Scan History</li>
               <li>Chat auto-deleted after 24h via pg_cron; scan history preserved independently</li>
-              <li>Chat reply push notifications — both owner and scanner notified on every new message</li>
+              <li>Chat reply push notifications — owner notified for every scanner message; scanner cannot receive notifications due to mobile browser restrictions</li>
               <li>WhatsApp integration — scanner's WhatsApp opens with pre-filled message; privacy confirmation required before owner can add WhatsApp number</li>
               <li>Scanner page: contact form with name, phone, message; "Be a user today" CTA banner</li>
               <li>Emergency flow: push alert to owner + scanner's phone dials emergency contact</li>
