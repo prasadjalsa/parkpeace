@@ -10,6 +10,7 @@ export interface Profile {
   emergency_phone: string | null
   emergency_rel: string | null
   fcm_token: string | null
+  fcm_token_updated_at: string | null
   is_developer: boolean
 }
 

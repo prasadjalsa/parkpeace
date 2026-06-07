@@ -120,7 +120,7 @@ export function ProfileForm({ profile, email, onSave }: Props) {
     setNotifError(null)
     const result = await requestFCMToken()
     if ('token' in result) {
-      await onSave({ fcm_token: result.token })
+      await onSave({ fcm_token: result.token, fcm_token_updated_at: new Date().toISOString() })
       setNotifStatus('enabled')
     } else {
       setNotifError(result.error)

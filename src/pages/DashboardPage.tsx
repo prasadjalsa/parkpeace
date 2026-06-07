@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { LogOut, QrCode, Clock, UserCircle, Mail, X, Megaphone } from 'lucide-react'
+import { LogOut, QrCode, Clock, UserCircle, Mail, X, Megaphone, Bell } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
@@ -65,6 +65,22 @@ export function DashboardPage() {
     window.addEventListener('parkpeace:new-scan', onNewScan)
     return () => window.removeEventListener('parkpeace:new-scan', onNewScan)
   }, [])
+
+  // Auto-refresh FCM token on every dashboard load — prevents 60-day expiry
+  // for users who open the app but don't explicitly re-enable notifications.
+  useEffect(() => {
+    if (!user?.id || Notification.permission !== 'granted') return
+    import('../lib/firebase').then(({ requestFCMToken }) => {
+      requestFCMToken().then((result) => {
+        if ('token' in result) {
+          supabase.from('profiles')
+            .update({ fcm_token: result.token, fcm_token_updated_at: new Date().toISOString() })
+            .eq('id', user.id)
+            .then(() => {})
+        }
+      })
+    })
+  }, [user?.id])
 
   // Clear badge when app is foregrounded
   useEffect(() => {
@@ -168,6 +184,24 @@ export function DashboardPage() {
           </nav>
         </div>
       </div>
+
+      {/* Push notification banner — shown if permission not granted */}
+      {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
+        <div className="bg-primary-50 border-b border-primary-100">
+          <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-primary-700">
+              <Bell className="w-4 h-4 shrink-0" />
+              <span>Enable push notifications to get instant alerts when someone scans your QR.</span>
+            </div>
+            <button
+              onClick={() => navigate('/profile')}
+              className="shrink-0 text-xs font-semibold text-primary-700 hover:text-primary-900 transition-colors whitespace-nowrap"
+            >
+              Enable now →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <main className="max-w-2xl mx-auto px-4 py-6">
