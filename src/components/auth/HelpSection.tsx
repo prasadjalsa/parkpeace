@@ -27,7 +27,7 @@ function SectionContent({ id }: { id: Section }) {
           <p><strong>3. Enable notifications</strong> — In Profile, tap <strong>Enable</strong> in the Push Notifications section and allow the browser prompt. You'll get instant alerts when someone scans your QR. Once enabled, tap the green <strong>Enabled</strong> button again anytime to refresh the notification token on that device.</p>
           <p><strong>4. Add a QR Code</strong> — Go to the <strong>My QR Codes</strong> tab and tap <strong>Add QR Code</strong>. Choose whether it's for a <strong>Car/Vehicle</strong> or <strong>Home/Flat</strong> — each generates a different card design. Pick a header colour from 6 presets or choose a custom colour. Give it a name and tap Add.</p>
           <p><strong>5. Print &amp; place the QR</strong> — Download the QR as a PNG, print it, and place it on your dashboard or windshield.</p>
-          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. Both you and the scanner receive push notifications for every new chat message. The scanner can also tap <strong>"Get notified when owner replies"</strong> to opt in to reply notifications (iPhone users must add the page to Home Screen first). If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
+          <p><strong>6. Get notified</strong> — When someone scans your QR and submits the contact form, you receive a push notification. If you have a WhatsApp number saved, the scanner's WhatsApp will also open with a pre-filled message. A <strong>live chat window</strong> opens inline on the scanner's page — tap the notification to join the conversation. Both you and the scanner can exchange messages in real time. Due to mobile browser restrictions, the scanner will not receive push notifications for chat replies — they need to keep the page open to see new messages. If the scanner closes the tab and rescans the same QR within 24 hours, the same chat window reopens automatically.</p>
           <p><strong>7. View scan history</strong> — See all events in the <strong>Scan History</strong> tab, or tap the clock icon on any QR code card to see only that QR code's history. Use <strong>Clear History</strong> to delete events by date range. A red badge on the tab shows how many new scans you haven't viewed yet.</p>
         </div>
       )
@@ -235,9 +235,8 @@ function SectionContent({ id }: { id: Section }) {
           </div>
 
           <div className="bg-amber-50 rounded-lg p-3 space-y-1">
-            <p className="font-semibold text-amber-800 text-xs">iPhone limitation — reply notifications</p>
-            <p className="text-xs text-amber-700">When a scanner taps <strong>"Get notified when owner replies"</strong>, iPhone restricts push notifications to pages added to the Home Screen. This is an <strong>Apple limitation</strong>, not a ParkPeace issue. Android users are unaffected — the browser handles it directly.</p>
-            <p className="text-xs text-amber-700 mt-1">If you're on an iPhone and want reply notifications: open this page in <strong>Safari</strong> → tap Share → <strong>Add to Home Screen</strong> → open from there, then tap the button.</p>
+            <p className="font-semibold text-amber-800 text-xs">Scanner reply notifications</p>
+            <p className="text-xs text-amber-700">Due to mobile browser restrictions, the scanner cannot receive push notifications for chat replies on the scan page. The scanner needs to keep the page open to see new messages. The chat window reopens automatically if they return to the same scan URL within 24 hours.</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-3 space-y-1">
