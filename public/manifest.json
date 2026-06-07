@@ -2,7 +2,7 @@
   "name": "ParkPeace",
   "short_name": "ParkPeace",
   "description": "Smart QR alerts for your parked car",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
