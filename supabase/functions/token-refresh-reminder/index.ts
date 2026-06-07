@@ -115,7 +115,24 @@ serve(async (req) => {
     const sa = JSON.parse(serviceAccountJson)
     const accessToken = await getAccessToken(sa.client_email, sa.private_key)
 
+    // Fetch developer FCM token for inbox notification
+    const { data: devProfile } = await supabase
+      .from("profiles")
+      .select("fcm_token")
+      .eq("is_developer", true)
+      .not("fcm_token", "is", null)
+      .limit(1)
+      .single()
+
+    // Fetch emails for reporting
+    const { data: authUsers } = await supabase.auth.admin.listUsers()
+    const emailMap: Record<string, string> = {}
+    for (const u of authUsers?.users ?? []) {
+      emailMap[u.id] = u.email ?? 'Unknown'
+    }
+
     let totalSent = 0
+    const criticalUsers: string[] = []
 
     for (const reminder of reminders) {
       const from = new Date(now.getTime() - (reminder.days + 1) * 86_400_000).toISOString()
@@ -123,16 +140,40 @@ serve(async (req) => {
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, fcm_token")
+        .select("id, full_name, fcm_token")
         .not("fcm_token", "is", null)
         .gte("fcm_token_updated_at", from)
         .lt("fcm_token_updated_at", to)
 
-      for (const profile of profiles ?? []) {
+      for (const profile of (profiles ?? []) as { id: string; full_name: string | null; fcm_token: string }[]) {
         await sendFCMPush(profile.fcm_token, reminder.title, reminder.body, sa.project_id, accessToken)
         totalSent++
         console.log(`Sent ${reminder.level} reminder to user ${profile.id}`)
+
+        // On day 58 (critical) — log to developer inbox and send developer a push
+        if (reminder.level === "critical") {
+          const userName = profile.full_name ?? 'Unknown'
+          const userEmail = emailMap[profile.id] ?? 'Unknown'
+          criticalUsers.push(`${userName} (${userEmail})`)
+
+          await supabase.from("contact_developer").insert({
+            user_id: profile.id,
+            user_email: userEmail,
+            message: `⛔ FCM token expiry alert: ${userName} (${userEmail}) has not opened the app in 58 days. Their push notifications will expire in 2 days.`,
+          })
+        }
       }
+    }
+
+    // Send developer a single summary push if any critical users
+    if (criticalUsers.length > 0 && devProfile?.fcm_token) {
+      await sendFCMPush(
+        devProfile.fcm_token,
+        `⛔ ${criticalUsers.length} user${criticalUsers.length > 1 ? 's' : ''} near FCM expiry`,
+        `${criticalUsers.join(', ')} — notifications expire in 2 days.`,
+        sa.project_id,
+        accessToken,
+      )
     }
 
     return new Response(JSON.stringify({ success: true, sent: totalSent }), {
