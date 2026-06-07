@@ -60,10 +60,16 @@ export function ContactSection({ qrCodeId, template = 'car' }: Props) {
       }
       return
     }
-    await supabase
+    const { error: updateError } = await supabase
       .from('chat_sessions')
       .update({ scanner_fcm_token: result.token })
       .eq('id', sessionId)
+    if (updateError) {
+      console.error('Failed to save FCM token:', updateError)
+      setNotifyError('Could not save notification preference. Please try again.')
+      setNotifyLoading(false)
+      return
+    }
     setNotifyEnabled(true)
     sessionStorage.setItem(`notify_enabled_${qrCodeId}`, 'true')
     setNotifyLoading(false)
