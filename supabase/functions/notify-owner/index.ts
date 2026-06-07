@@ -244,8 +244,12 @@ serve(async (req) => {
         const sa = JSON.parse(serviceAccountJson)
         const accessToken = await getAccessToken(sa.client_email, sa.private_key)
         const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://parkpeace.vercel.app"
-        const fcmData: Record<string, string> = {}
-        if (chatSessionId) fcmData.chatUrl = `${appOrigin}/chat/${chatSessionId}`
+        const fcmData: Record<string, string> = {
+          // Always link to scan history so tapping the notification opens the right place
+          chatUrl: chatSessionId
+            ? `${appOrigin}/chat/${chatSessionId}`
+            : `${appOrigin}/dashboard?tab=history`,
+        }
         await sendFCMPush(profile.fcm_token, pushTitle, pushBody, sa.project_id, accessToken, fcmData)
       } catch (err) {
         console.error("FCM push failed:", err)

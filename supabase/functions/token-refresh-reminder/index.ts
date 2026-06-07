@@ -54,7 +54,7 @@ async function getAccessToken(clientEmail: string, privateKeyPem: string): Promi
   return data.access_token
 }
 
-async function sendFCMPush(fcmToken: string, title: string, body: string, projectId: string, accessToken: string) {
+async function sendFCMPush(fcmToken: string, title: string, body: string, projectId: string, accessToken: string, data?: Record<string, string>) {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
     headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -62,7 +62,7 @@ async function sendFCMPush(fcmToken: string, title: string, body: string, projec
       message: {
         token: fcmToken,
         notification: { title, body },
-        data: { chatUrl: "/dashboard" },
+        data: data ?? {},
         android: { priority: "high" },
         apns: { headers: { "apns-priority": "10" } },
       },
@@ -107,9 +107,24 @@ serve(async (req) => {
     // Find users whose FCM token was last updated 50, 55, or 58 days ago
     // We send on these exact days to avoid repeated notifications
     const reminders = [
-      { days: 58, level: "critical", title: "⛔ Notifications expiring in 2 days", body: "Open ParkPeace now to keep receiving alerts. Takes just a second." },
-      { days: 55, level: "warning",  title: "⚠️ Notifications expiring in 5 days", body: "Open ParkPeace to refresh your notification token before it expires." },
-      { days: 50, level: "alert",    title: "🔔 Notifications expire in 10 days",  body: "Open ParkPeace soon to keep your scan alerts active." },
+      {
+        days: 58, level: "critical",
+        title: "⛔ Notifications expiring in 2 days",
+        body: "Open ParkPeace now to keep receiving alerts. Takes just a second.",
+        popup: "✅ Notification token refreshed! You're all set for the next 60 days.",
+      },
+      {
+        days: 55, level: "warning",
+        title: "⚠️ Notifications expiring in 5 days",
+        body: "Open ParkPeace to refresh your notification token before it expires.",
+        popup: "✅ Notification token refreshed! You're all set for the next 60 days.",
+      },
+      {
+        days: 50, level: "alert",
+        title: "🔔 Notifications expire in 10 days",
+        body: "Open ParkPeace soon to keep your scan alerts active.",
+        popup: "✅ Notification token refreshed! You're all set for the next 60 days.",
+      },
     ]
 
     const sa = JSON.parse(serviceAccountJson)
@@ -146,7 +161,8 @@ serve(async (req) => {
         .lt("fcm_token_updated_at", to)
 
       for (const profile of (profiles ?? []) as { id: string; full_name: string | null; fcm_token: string }[]) {
-        await sendFCMPush(profile.fcm_token, reminder.title, reminder.body, sa.project_id, accessToken)
+        const announceUrl = `/dashboard?announce=${encodeURIComponent(reminder.title)}|${encodeURIComponent(reminder.popup)}`
+        await sendFCMPush(profile.fcm_token, reminder.title, reminder.body, sa.project_id, accessToken, { chatUrl: announceUrl })
         totalSent++
         console.log(`Sent ${reminder.level} reminder to user ${profile.id}`)
 
@@ -167,12 +183,15 @@ serve(async (req) => {
 
     // Send developer a single summary push if any critical users
     if (criticalUsers.length > 0 && devProfile?.fcm_token) {
+      const devTitle = `⛔ ${criticalUsers.length} user${criticalUsers.length > 1 ? 's' : ''} near FCM expiry`
+      const devBody = `${criticalUsers.join(', ')} — notifications expire in 2 days.`
       await sendFCMPush(
         devProfile.fcm_token,
-        `⛔ ${criticalUsers.length} user${criticalUsers.length > 1 ? 's' : ''} near FCM expiry`,
-        `${criticalUsers.join(', ')} — notifications expire in 2 days.`,
+        devTitle,
+        devBody,
         sa.project_id,
         accessToken,
+        { chatUrl: `/dashboard?announce=${encodeURIComponent(devTitle)}|${encodeURIComponent(devBody)}` },
       )
     }
 

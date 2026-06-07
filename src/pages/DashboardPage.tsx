@@ -18,12 +18,13 @@ const INBOX_LAST_SEEN_KEY = 'inbox_last_seen'
 export function DashboardPage() {
   const { user, loading, signOut } = useAuth()
   const { profile } = useProfile(user?.id)
-  const [activeTab, setActiveTab] = useState<Tab>('vehicles')
+  const [searchParams] = useSearchParams()
+  const openHelp = searchParams.get('help') === 'true'
+  const tabFromUrl = searchParams.get('tab') as Tab | null
+  const [activeTab, setActiveTab] = useState<Tab>(tabFromUrl ?? 'vehicles')
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxCount, setInboxCount] = useState(0)
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const openHelp = searchParams.get('help') === 'true'
 
   // Parse announcement from broadcast notification tap
   const announceParam = searchParams.get('announce')
