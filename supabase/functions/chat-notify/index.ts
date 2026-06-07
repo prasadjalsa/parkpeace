@@ -130,7 +130,6 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("authorization") ?? ""
     const token = authHeader.replace("Bearer ", "")
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 
     const { sessionId, senderRole, body } = parsedBody as {
       sessionId: string
@@ -157,7 +156,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
 
-    // Owner must be authenticated; scanner calls with anon key
+    // Owner must be authenticated; scanner calls anonymously (no user session)
     if (senderRole === "owner") {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token)
       if (authError || !user) {
@@ -179,13 +178,15 @@ serve(async (req) => {
         })
       }
     } else {
-      // Scanner: must be calling with the anon key (not a user session)
-      if (token !== anonKey) {
+      // Scanner: verify they are NOT authenticated as a user (anon call only)
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         })
       }
+      // Anonymous — allowed
     }
 
     // Rate limit: max 60 notifications per session per hour
