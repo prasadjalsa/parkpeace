@@ -14,7 +14,8 @@ interface QRInfo {
 export function ScanPage() {
   const { qrId } = useParams<{ qrId: string }>()
   const [searchParams] = useSearchParams()
-  const sessionFromUrl = searchParams.get('session')  const [qr, setQr] = useState<QRInfo | null>(null)
+  const sessionFromUrl = searchParams.get('session')
+  const [qr, setQr] = useState<QRInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [emergencyOpen, setEmergencyOpen] = useState(false)
