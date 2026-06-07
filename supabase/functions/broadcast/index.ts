@@ -75,7 +75,7 @@ async function sendFCMPush(
   body: string,
   projectId: string,
   accessToken: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; reason?: string }> {
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
     {
@@ -88,7 +88,7 @@ async function sendFCMPush(
         message: {
           token: fcmToken,
           notification: { title, body },
-          data: { chatUrl: `/dashboard?announce=${encodeURIComponent(title.trim())}|${encodeURIComponent(body.trim())}` },
+          data: { chatUrl: `/dashboard?announce=${encodeURIComponent(title)}|${encodeURIComponent(body)}` },
           android: { priority: "high" },
           apns: { headers: { "apns-priority": "10" } },
         },
@@ -96,11 +96,29 @@ async function sendFCMPush(
     },
   )
   if (!res.ok) {
-    const err = await res.text()
-    console.error("FCM error for token:", fcmToken.slice(0, 20), err)
-    return false
+    const errText = await res.text()
+    let reason = "Unknown error"
+    try {
+      const errJson = JSON.parse(errText)
+      const status = errJson?.error?.status ?? ""
+      if (status === "UNREGISTERED" || status === "INVALID_ARGUMENT") {
+        reason = "Token expired or device unregistered — user needs to re-enable notifications"
+      } else if (status === "QUOTA_EXCEEDED") {
+        reason = "FCM quota exceeded — try again later"
+      } else if (status === "UNAVAILABLE") {
+        reason = "FCM service unavailable — try again later"
+      } else if (status === "INTERNAL") {
+        reason = "FCM internal error"
+      } else {
+        reason = errJson?.error?.message ?? errText
+      }
+    } catch {
+      reason = errText.slice(0, 100)
+    }
+    console.error("FCM error:", reason, "| token:", fcmToken.slice(0, 20))
+    return { ok: false, reason }
   }
-  return true
+  return { ok: true }
 }
 
 // ── Main handler ───────────────────────────────────────────────────────────────
@@ -180,18 +198,25 @@ serve(async (req) => {
     // Send to all tokens — sequential to avoid rate limits
     let sent = 0
     let failed = 0
-    const failedUsers: { id: string; full_name: string; email: string }[] = []
+    const failedUsers: { id: string; full_name: string; email: string; reason: string }[] = []
+    const successUsers: { id: string; full_name: string; email: string }[] = []
 
     for (const profile of (profiles ?? []) as { id: string; full_name: string | null; fcm_token: string }[]) {
-      const ok = await sendFCMPush(profile.fcm_token, title.trim(), body.trim(), sa.project_id, accessToken)
-      if (ok) {
+      const result = await sendFCMPush(profile.fcm_token, title.trim(), body.trim(), sa.project_id, accessToken)
+      if (result.ok) {
         sent++
+        successUsers.push({
+          id: profile.id,
+          full_name: profile.full_name ?? 'Unknown',
+          email: emailMap[profile.id] ?? 'Unknown',
+        })
       } else {
         failed++
         failedUsers.push({
           id: profile.id,
           full_name: profile.full_name ?? 'Unknown',
           email: emailMap[profile.id] ?? 'Unknown',
+          reason: result.reason ?? 'Unknown error',
         })
       }
     }
@@ -204,10 +229,16 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
+      summary: `${sent} delivered, ${failed} failed out of ${(profiles ?? []).length} total`,
       sent,
       failed,
       total: (profiles ?? []).length,
-      failedUsers: failedUsers.length > 0 ? failedUsers : undefined,
+      deliveredTo: successUsers.length > 0 ? successUsers.map(u => `${u.full_name} (${u.email})`) : undefined,
+      failedUsers: failedUsers.length > 0 ? failedUsers.map(u => ({
+        name: u.full_name,
+        email: u.email,
+        reason: u.reason,
+      })) : undefined,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
