@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 interface Props {
   qrCodeId: string
   template?: 'car' | 'home'
+  sessionFromUrl?: string | null
 }
 
 type State = 'form' | 'loading' | 'success' | 'error'
@@ -25,7 +26,7 @@ function buildWhatsAppUrl(phone: string, carName: string, scannerName: string, s
   return `https://wa.me/${digits}?text=${text}`
 }
 
-export function ContactSection({ qrCodeId, template = 'car' }: Props) {
+export function ContactSection({ qrCodeId, template = 'car', sessionFromUrl }: Props) {
   const isHome = template === 'home'
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -33,7 +34,8 @@ export function ContactSection({ qrCodeId, template = 'car' }: Props) {
   const [state, setState] = useState<State>('form')
   const [errorMsg, setErrorMsg] = useState('')
   const [chatSessionId, setChatSessionId] = useState<string | null>(() => {
-    return sessionStorage.getItem(`chat_session_${qrCodeId}`)
+    // Prefer session from URL (from notification tap), fall back to sessionStorage
+    return sessionFromUrl ?? sessionStorage.getItem(`chat_session_${qrCodeId}`)
   })
   const [notifyEnabled, setNotifyEnabled] = useState(() => {
     return sessionStorage.getItem(`notify_enabled_${qrCodeId}`) === 'true'

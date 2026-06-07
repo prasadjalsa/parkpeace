@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { ContactSection } from '../components/scan/ContactSection'
@@ -13,7 +13,8 @@ interface QRInfo {
 
 export function ScanPage() {
   const { qrId } = useParams<{ qrId: string }>()
-  const [qr, setQr] = useState<QRInfo | null>(null)
+  const [searchParams] = useSearchParams()
+  const sessionFromUrl = searchParams.get('session')  const [qr, setQr] = useState<QRInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [emergencyOpen, setEmergencyOpen] = useState(false)
@@ -85,7 +86,7 @@ export function ScanPage() {
               </p>
             </div>
           </div>
-          <ContactSection qrCodeId={qr!.id} template={qr!.template} />
+          <ContactSection qrCodeId={qr!.id} template={qr!.template} sessionFromUrl={sessionFromUrl} />
         </div>
 
         {/* Emergency — collapsible */}
