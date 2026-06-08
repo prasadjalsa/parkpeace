@@ -32,8 +32,12 @@ export function ProfileForm({ profile, email, onSave }: Props) {
   const [emergencyRel, setEmergencyRel] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notifStatus, setNotifStatus] = useState<'idle' | 'enabling' | 'enabled' | 'denied'>(
-    typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'enabled' : 'idle'
+  const [notifStatus, setNotifStatus] = useState<'idle' | 'enabling' | 'enabled' | 'denied' | 'disabled'>(
+    () => {
+      if (localStorage.getItem('notifications_opted_out') === 'true') return 'disabled'
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') return 'enabled'
+      return 'idle'
+    }
   )
   const [notifError, setNotifError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -118,6 +122,7 @@ export function ProfileForm({ profile, email, onSave }: Props) {
   }
 
   async function handleEnableNotifications() {
+    localStorage.removeItem('notifications_opted_out')
     setNotifStatus('enabling')
     setNotifError(null)
     const result = await requestFCMToken()
@@ -128,6 +133,12 @@ export function ProfileForm({ profile, email, onSave }: Props) {
       setNotifError(result.error)
       setNotifStatus(typeof Notification !== 'undefined' && Notification.permission === 'denied' ? 'denied' : 'idle')
     }
+  }
+
+  async function handleDisableNotifications() {
+    await onSave({ fcm_token: null, fcm_token_updated_at: null })
+    localStorage.setItem('notifications_opted_out', 'true')
+    setNotifStatus('disabled')
   }
 
   return (
@@ -267,11 +278,19 @@ export function ProfileForm({ profile, email, onSave }: Props) {
           {notifStatus === 'enabled' ? (
             <button
               type="button"
-              onClick={() => { setNotifStatus('idle'); setNotifError(null) }}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-full transition-colors"
-              title="Click to refresh token on this device"
+              onClick={handleDisableNotifications}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-red-50 hover:text-red-600 px-3 py-1.5 rounded-full transition-colors"
+              title="Click to disable push notifications"
             >
               <Bell className="w-3.5 h-3.5" /> Enabled
+            </button>
+          ) : notifStatus === 'disabled' ? (
+            <button
+              type="button"
+              onClick={handleEnableNotifications}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors"
+            >
+              <BellOff className="w-3.5 h-3.5" /> Disabled — tap to enable
             </button>
           ) : notifStatus === 'denied' ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-full">

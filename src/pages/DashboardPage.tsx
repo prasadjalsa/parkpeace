@@ -68,10 +68,12 @@ export function DashboardPage() {
     return () => window.removeEventListener('parkpeace:new-scan', onNewScan)
   }, [])
 
-  // Auto-refresh FCM token on every dashboard load — prevents 60-day expiry
-  // for users who open the app but don't explicitly re-enable notifications.
+  // Auto-refresh FCM token on every dashboard load — prevents 60-day expiry.
+  // Skips users who explicitly opted out of notifications.
   useEffect(() => {
-    if (!user?.id || Notification.permission !== 'granted') return
+    if (!user?.id) return
+    if (Notification.permission !== 'granted') return
+    if (localStorage.getItem('notifications_opted_out') === 'true') return
     import('../lib/firebase').then(({ requestFCMToken }) => {
       requestFCMToken().then((result) => {
         if ('token' in result) {
