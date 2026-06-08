@@ -71,12 +71,52 @@ export function AuthForm() {
     setLoading(true)
 
     if (tab === 'login') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setMessage({ type: 'error', text: error.message })
+      // Check if account is locked out
+      const lockoutRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ email: email.toLowerCase(), action: 'check' }),
+        }
+      )
+      const lockoutData = await lockoutRes.json()
+      if (lockoutData.locked) {
+        setMessage({ type: 'error', text: `Account temporarily locked after 5 failed attempts. Try again in ${lockoutData.lockoutMinutes} minutes.` })
         setLoading(false)
         return
       }
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        // Record failure and show remaining attempts
+        const failRes = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ email: email.toLowerCase(), action: 'record_failure' }),
+          }
+        )
+        const failData = await failRes.json()
+        if (failData.locked) {
+          setMessage({ type: 'error', text: `Account locked after 5 failed attempts. Try again in ${failData.lockoutMinutes} minutes.` })
+        } else {
+          setMessage({ type: 'error', text: `${error.message} (${failData.remaining} attempt${failData.remaining !== 1 ? 's' : ''} remaining before lockout)` })
+        }
+        setLoading(false)
+        return
+      }
+
+      // Success — clear failed attempts and log
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ email: email.toLowerCase(), action: 'reset' }),
+        }
+      )
       auditLog('sign_in', { email })
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
