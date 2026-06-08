@@ -192,8 +192,11 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Push notification banner — shown if permission not granted */}
-      {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
+      {/* Push notification banner — shown if permission not granted or user opted out */}
+      {typeof Notification !== 'undefined' && (
+        Notification.permission !== 'granted' ||
+        localStorage.getItem('notifications_opted_out') === 'true'
+      ) && (
         <div className="bg-primary-50 border-b border-primary-100">
           <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-primary-700">
