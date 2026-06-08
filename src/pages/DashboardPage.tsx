@@ -204,7 +204,19 @@ export function DashboardPage() {
               <span>Enable push notifications to get instant alerts when someone scans your QR.</span>
             </div>
             <button
-              onClick={() => navigate('/profile')}
+              onClick={async () => {
+                localStorage.removeItem('notifications_opted_out')
+                const { requestFCMToken } = await import('../lib/firebase')
+                const result = await requestFCMToken()
+                if ('token' in result && user?.id) {
+                  await supabase.from('profiles')
+                    .update({ fcm_token: result.token, fcm_token_updated_at: new Date().toISOString() })
+                    .eq('id', user.id)
+                  window.location.reload() // refresh to update banner + profile state
+                } else {
+                  navigate('/profile') // fallback — show error in profile
+                }
+              }}
               className="shrink-0 text-xs font-semibold text-primary-700 hover:text-primary-900 transition-colors whitespace-nowrap"
             >
               Enable now →

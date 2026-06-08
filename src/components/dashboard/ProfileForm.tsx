@@ -276,14 +276,18 @@ export function ProfileForm({ profile, email, onSave }: Props) {
             <p className="text-xs text-gray-400 mt-0.5">Get notified when someone scans your QR (via Firebase). On iPhone, add this site to your Home Screen first.</p>
           </div>
           {notifStatus === 'enabled' ? (
-            <button
-              type="button"
-              onClick={handleDisableNotifications}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 hover:bg-red-50 hover:text-red-600 px-3 py-1.5 rounded-full transition-colors"
-              title="Click to disable push notifications"
-            >
-              <Bell className="w-3.5 h-3.5" /> Enabled
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 px-3 py-1.5 rounded-full">
+                <Bell className="w-3.5 h-3.5" /> Enabled
+              </span>
+              <button
+                type="button"
+                onClick={handleDisableNotifications}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              >
+                Disable
+              </button>
+            </div>
           ) : notifStatus === 'disabled' ? (
             <button
               type="button"
