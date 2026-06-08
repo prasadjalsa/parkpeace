@@ -309,59 +309,28 @@ function SectionContent({ id }: { id: Section }) {
           <div>
             <p className="font-semibold text-gray-800 mb-1">Tech Stack</p>
             <ul className="list-disc list-inside space-y-1 ml-1">
-              <li>Frontend: React + TypeScript + Vite + Tailwind CSS</li>
-              <li>Auth &amp; Database: Supabase (PostgreSQL + Row Level Security)</li>
-              <li>Push Notifications: Firebase Cloud Messaging (FCM v1 API)</li>
-              <li>Backend Logic: Supabase Edge Functions (Deno)</li>
-              <li>Hosting: Vercel (auto-deploy from GitHub)</li>
-              <li>QR Generation: qrcode.react (client-side, no server needed)</li>
+              <li><strong>Frontend:</strong> React + TypeScript + Vite + Tailwind CSS — hosted on Vercel</li>
+              <li><strong>Auth &amp; Database:</strong> Supabase (PostgreSQL + Row Level Security + Edge Functions)</li>
+              <li><strong>Push Notifications:</strong> Firebase Cloud Messaging (FCM v1 API) via service worker</li>
+              <li><strong>QR Generation:</strong> qrcode.react — client-side, no server needed</li>
+              <li><strong>Email:</strong> Resend SMTP via Supabase Auth</li>
+              <li><strong>CI/CD:</strong> GitHub Actions — auto-deploys Edge Functions on push</li>
             </ul>
           </div>
           <div>
-            <p className="font-semibold text-gray-800 mb-1">Features</p>
+            <p className="font-semibold text-gray-800 mb-1">Key Integrations</p>
             <ul className="list-disc list-inside space-y-1 ml-1">
-              <li>Owner dashboard: profile, multiple QR codes (car or home), scan history</li>
-              <li>Profile view/edit mode — shows saved values, edit button to modify</li>
-              <li>Profile accessible via a styled clickable button (name + icon) in the header</li>
-              <li>Register: confirm password field with live match indicator; eye icon to show/hide password</li>
-              <li>Live chat: 24h ephemeral chat session created on contact — scanner chats inline, owner joins via notification tap or Scan History</li>
-              <li>Chat auto-deleted after 24h via pg_cron; scan history preserved independently</li>
-              <li>Chat reply push notifications — owner notified for every scanner message; scanner cannot receive notifications due to mobile browser restrictions</li>
-              <li>WhatsApp integration — scanner's WhatsApp opens with pre-filled message; privacy confirmation required before owner can add WhatsApp number</li>
-              <li>Scanner page: contact form with name, phone, message; "Be a user today" CTA banner</li>
-              <li>Emergency flow: push alert to owner + scanner's phone dials emergency contact</li>
-              <li>Unread scan badge on Scan History tab + app icon badge via Web Badge API</li>
-              <li>Clear scan history by custom date range</li>
-              <li>Help &amp; Documentation panel accessible from every page header</li>
-              <li>Contact Developer form in Help panel — logged-in users send feedback with instant push to developer</li>
-              <li>Developer Inbox tab (developer account only) — view and bulk-delete user messages</li>
-              <li>Broadcast push notifications with in-app announcement popup when tapped</li>
-              <li>Broadcast improvements — response includes delivered users and human-readable failure reasons (visible in Supabase logs/SQL)</li>
-              <li>FCM token auto-refresh on every dashboard load — prevents 60-day expiry silently</li>
-              <li>FCM token expiry reminders via push notification at day 50 (alert), 55 (warning), 58 (critical)</li>
-              <li>Developer inbox alert when any user reaches critical expiry on day 58</li>
-              <li>Enable notifications banner on dashboard if permission not yet granted</li>
-              <li>QR template selector — Car/Vehicle or Home/Flat with distinct card designs and colours</li>
-              <li>QR header colour picker — 6 presets + custom colour, auto-selects readable text colour</li>
-            </ul>
-          </div>
-          <div>
-            <p className="font-semibold text-gray-800 mb-1">Key Design Decisions</p>
-            <ul className="list-disc list-inside space-y-1 ml-1">
-              <li>Scanner page is fully public — no login required</li>
-              <li>Owner's phone number is never shown to the scanner; WhatsApp number becomes visible in WhatsApp chat once opened — users confirm this before adding it</li>
-              <li>WhatsApp number returned by Edge Function only after notification is sent</li>
-              <li>Emergency uses scanner's own phone to dial (free — no Twilio)</li>
-              <li>Firebase service worker generated at build time from env vars (no API keys in git)</li>
-              <li>FCM JWT signing done in Edge Function using RSA/RS256 — no third-party auth library needed</li>
-              <li>Foreground push messages handled in main thread; background via service worker</li>
-              <li>RLS policies ensure owners can only read and delete their own data</li>
-              <li>GitHub Actions deploys Edge Functions — no local Supabase CLI needed</li>
+              <li><strong>FCM:</strong> RSA/RS256 JWT signed in Edge Functions — no third-party library</li>
+              <li><strong>WhatsApp:</strong> Deep link via wa.me — no API, no cost</li>
+              <li><strong>Emergency calls:</strong> tel: link on scanner's device — no server involvement</li>
+              <li><strong>Realtime chat:</strong> Supabase Realtime (WebSocket) — 24h ephemeral sessions</li>
+              <li><strong>Rate limiting:</strong> Persistent DB-backed via Supabase RPC</li>
+              <li><strong>Security:</strong> RLS on all tables, audit log, account lockout, pg_cron cleanup</li>
             </ul>
           </div>
           <div className="bg-primary-50 rounded-lg p-3">
             <p className="font-semibold text-primary-800 text-xs">Total server cost: $0</p>
-            <p className="text-primary-700 text-xs mt-0.5">Future enhancement: bridge calls via Twilio (connect scanner + owner via server-side call).</p>
+            <p className="text-primary-700 text-xs mt-0.5">Runs entirely on Supabase, Firebase, and Vercel free tiers.</p>
           </div>
         </div>
       )

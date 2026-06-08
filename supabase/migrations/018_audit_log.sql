@@ -45,7 +45,7 @@ create policy "users insert own audit log" on audit_log
   for insert with check (auth.uid() = user_id);
 
 -- Only developer can delete audit log entries (for manual clear)
--- Regular users cannot delete — immutable for them
+-- Regular users cannot read or modify audit entries at all
 drop policy if exists "deny audit log delete" on audit_log;
 drop policy if exists "deny audit log update" on audit_log;
 drop policy if exists "developer deletes audit log" on audit_log;
