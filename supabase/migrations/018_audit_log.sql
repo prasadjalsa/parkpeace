@@ -44,8 +44,18 @@ drop policy if exists "users insert own audit log" on audit_log;
 create policy "users insert own audit log" on audit_log
   for insert with check (auth.uid() = user_id);
 
--- Explicitly deny DELETE and UPDATE — audit log is immutable
+-- Only developer can delete audit log entries (for manual clear)
+-- Regular users cannot delete — immutable for them
 drop policy if exists "deny audit log delete" on audit_log;
 drop policy if exists "deny audit log update" on audit_log;
-create policy "deny audit log delete" on audit_log for delete using (false);
+drop policy if exists "developer deletes audit log" on audit_log;
+create policy "developer deletes audit log" on audit_log
+  for delete using (
+    exists (select 1 from profiles where id = auth.uid() and is_developer = true)
+  );
 create policy "deny audit log update" on audit_log for update using (false);
+
+-- Auto-clean audit log entries older than 90 days via pg_cron
+-- Run after enabling pg_cron:
+-- select cron.schedule('clean-audit-log', '0 2 * * *',
+--   $$ delete from public.audit_log where created_at < now() - interval '90 days'; $$);
