@@ -71,18 +71,28 @@ export function AuthForm() {
     setLoading(true)
 
     if (tab === 'login') {
-      // Check if account is locked out
-      const lockoutRes = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-          body: JSON.stringify({ email: email.toLowerCase(), action: 'check' }),
+      // Helper to call check-lockout — fails open so login is never broken by outage
+      const callLockout = async (action: string): Promise<Record<string, unknown>> => {
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+              body: JSON.stringify({ email: email.toLowerCase(), action }),
+            }
+          )
+          if (!res.ok) return {}
+          return await res.json()
+        } catch {
+          return {} // Fail open — lockout service down, allow login to proceed
         }
-      )
-      const lockoutData = await lockoutRes.json()
+      }
+
+      // Check if account is locked out
+      const lockoutData = await callLockout('check')
       if (lockoutData.locked) {
-        setMessage({ type: 'error', text: `Account temporarily locked after 5 failed attempts. Try again in ${lockoutData.lockoutMinutes} minutes.` })
+        setMessage({ type: 'error', text: 'Too many failed attempts. Account temporarily locked — please try again later.' })
         setLoading(false)
         return
       }
@@ -90,33 +100,19 @@ export function AuthForm() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         // Record failure and show remaining attempts
-        const failRes = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-            body: JSON.stringify({ email: email.toLowerCase(), action: 'record_failure' }),
-          }
-        )
-        const failData = await failRes.json()
+        const failData = await callLockout('record_failure')
         if (failData.locked) {
-          setMessage({ type: 'error', text: `Account locked after 5 failed attempts. Try again in ${failData.lockoutMinutes} minutes.` })
+          setMessage({ type: 'error', text: 'Too many failed attempts. Account temporarily locked — please try again later.' })
         } else {
-          setMessage({ type: 'error', text: `${error.message} (${failData.remaining} attempt${failData.remaining !== 1 ? 's' : ''} remaining before lockout)` })
+          const remaining = typeof failData.remaining === 'number' ? failData.remaining : null
+          setMessage({ type: 'error', text: remaining !== null ? `${error.message} (${remaining} attempt${remaining !== 1 ? 's' : ''} remaining)` : error.message })
         }
         setLoading(false)
         return
       }
 
-      // Success — clear failed attempts and log
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-          body: JSON.stringify({ email: email.toLowerCase(), action: 'reset' }),
-        }
-      )
+      // Success — clear failed attempts and log (fire-and-forget, non-blocking)
+      callLockout('reset')
       auditLog('sign_in', { email })
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {

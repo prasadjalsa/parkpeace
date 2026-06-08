@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { isRateLimited } from "../_shared/rate-limit.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,15 @@ serve(async (req) => {
     }
 
     if (action === "record_failure") {
+      // Rate limit: max 10 record_failure calls per IP per 5 minutes
+      // Prevents attacker from locking out someone else's account
+      if (await isRateLimited(`lockout-record:${ip}`, 10, 300)) {
+        return new Response(JSON.stringify({ error: "Too many requests" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        })
+      }
+
       await supabase.from("login_attempts").insert({
         email: email.toLowerCase(),
         ip,
