@@ -59,6 +59,24 @@ export function AuthForm() {
     setConfirm('')
   }
 
+  // Calls check-lockout Edge Function — fails open if service is down
+  async function callLockout(emailAddr: string, action: string): Promise<Record<string, unknown>> {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ email: emailAddr, action }),
+        }
+      )
+      if (!res.ok) return {}
+      return await res.json()
+    } catch {
+      return {}
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setMessage(null)
@@ -71,26 +89,8 @@ export function AuthForm() {
     setLoading(true)
 
     if (tab === 'login') {
-      // Helper to call check-lockout — fails open so login is never broken by outage
-      const callLockout = async (action: string): Promise<Record<string, unknown>> => {
-        try {
-          const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-lockout`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-              body: JSON.stringify({ email: email.toLowerCase(), action }),
-            }
-          )
-          if (!res.ok) return {}
-          return await res.json()
-        } catch {
-          return {} // Fail open — lockout service down, allow login to proceed
-        }
-      }
-
       // Check if account is locked out
-      const lockoutData = await callLockout('check')
+      const lockoutData = await callLockout(email.toLowerCase(), 'check')
       if (lockoutData.locked) {
         setMessage({ type: 'error', text: 'Too many failed attempts. Account temporarily locked — please try again later.' })
         setLoading(false)
@@ -100,7 +100,7 @@ export function AuthForm() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         // Record failure and show remaining attempts
-        const failData = await callLockout('record_failure')
+        const failData = await callLockout(email.toLowerCase(), 'record_failure')
         if (failData.locked) {
           setMessage({ type: 'error', text: 'Too many failed attempts. Account temporarily locked — please try again later.' })
         } else {
@@ -112,7 +112,7 @@ export function AuthForm() {
       }
 
       // Success — clear failed attempts and log (fire-and-forget, non-blocking)
-      callLockout('reset')
+      callLockout(email.toLowerCase(), 'reset')
       auditLog('sign_in', { email })
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {

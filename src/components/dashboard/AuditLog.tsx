@@ -42,7 +42,7 @@ export function AuditLog() {
     if (!confirm('Delete all audit log entries? This cannot be undone.')) return
     setClearing(true)
     await supabase.from('audit_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    setEntries([])
+    await loadEntries()
     setClearing(false)
   }
 
