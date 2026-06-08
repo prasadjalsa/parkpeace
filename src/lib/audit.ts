@@ -1,8 +1,8 @@
 import { supabase } from './supabase'
 
 const ALLOWED_ACTIONS = new Set([
-  'sign_in', 'sign_out', 'account_deleted',
-  'qr_created', 'qr_deleted', 'profile_updated', 'scan_history_cleared',
+  'sign_in', 'account_deleted',
+  'qr_created', 'qr_deleted', 'profile_updated',
 ])
 
 // Client-side rate limit — max 20 audit entries per hour per session

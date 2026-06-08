@@ -4,8 +4,8 @@ create table if not exists public.audit_log (
   user_id    uuid references auth.users(id) on delete set null,
   user_email text,
   action     text not null check (action in (
-    'sign_in', 'sign_out', 'account_deleted',
-    'qr_created', 'qr_deleted', 'profile_updated', 'scan_history_cleared'
+    'sign_in', 'account_deleted',
+    'qr_created', 'qr_deleted', 'profile_updated'
   )),
   details    jsonb,
   created_at timestamptz not null default now()

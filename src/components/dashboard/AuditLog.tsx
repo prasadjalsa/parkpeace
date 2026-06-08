@@ -12,12 +12,10 @@ interface AuditEntry {
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   sign_in:          { label: 'Sign In',         color: 'bg-blue-50 text-blue-700' },
-  sign_out:         { label: 'Sign Out',         color: 'bg-gray-50 text-gray-600' },
   account_deleted:  { label: 'Account Deleted',  color: 'bg-red-50 text-red-700' },
   qr_created:       { label: 'QR Created',        color: 'bg-green-50 text-green-700' },
   qr_deleted:       { label: 'QR Deleted',        color: 'bg-orange-50 text-orange-700' },
   profile_updated:  { label: 'Profile Updated',   color: 'bg-primary-50 text-primary-700' },
-  scan_history_cleared: { label: 'History Cleared', color: 'bg-yellow-50 text-yellow-700' },
 }
 
 export function AuditLog() {
