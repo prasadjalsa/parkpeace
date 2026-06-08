@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { auditLog } from '../../lib/audit'
 import { HelpSection } from './HelpSection'
 
 type Tab = 'login' | 'register' | 'forgot'
@@ -76,6 +77,7 @@ export function AuthForm() {
         setLoading(false)
         return
       }
+      auditLog('sign_in', { email })
       const next = new URLSearchParams(window.location.search).get('next')
       if (next && next.startsWith('/') && !next.startsWith('//')) {
         navigate(next, { replace: true })

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { LogOut, QrCode, Clock, UserCircle, Mail, X, Megaphone, Bell } from 'lucide-react'
+import { LogOut, QrCode, Clock, UserCircle, Mail, X, Megaphone, Bell, Shield } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
@@ -8,9 +8,10 @@ import { initForegroundMessaging, clearCorruptedFCMState } from '../lib/firebase
 import { QRCodeManager } from '../components/dashboard/QRCodeManager'
 import { ScanHistory } from '../components/dashboard/ScanHistory'
 import { DeveloperInbox } from '../components/dashboard/DeveloperInbox'
+import { AuditLog } from '../components/dashboard/AuditLog'
 import { HelpButton } from '../components/auth/HelpSection'
 
-type Tab = 'vehicles' | 'history' | 'inbox'
+type Tab = 'vehicles' | 'history' | 'inbox' | 'audit'
 
 const LAST_SEEN_KEY = 'scan_history_last_seen'
 const INBOX_LAST_SEEN_KEY = 'inbox_last_seen'
@@ -157,7 +158,10 @@ export function DashboardPage() {
             {([
               { id: 'vehicles' as Tab, label: 'My QR Codes', icon: <QrCode className="w-4 h-4" /> },
               { id: 'history' as Tab, label: 'Scan History', icon: <Clock className="w-4 h-4" /> },
-              ...(profile?.is_developer ? [{ id: 'inbox' as Tab, label: 'Inbox', icon: <Mail className="w-4 h-4" /> }] : []),
+              ...(profile?.is_developer ? [
+                { id: 'inbox' as Tab, label: 'Inbox', icon: <Mail className="w-4 h-4" /> },
+                { id: 'audit' as Tab, label: 'Audit Log', icon: <Shield className="w-4 h-4" /> },
+              ] : []),
             ]).map((tab) => (
               <button
                 key={tab.id}
@@ -214,6 +218,9 @@ export function DashboardPage() {
         )}
         {activeTab === 'inbox' && profile?.is_developer && (
           <DeveloperInbox />
+        )}
+        {activeTab === 'audit' && profile?.is_developer && (
+          <AuditLog />
         )}
       </main>
 

@@ -3,6 +3,7 @@ import { Save, Bell, BellOff, Pencil, X, Trash2, AlertTriangle, Loader2 } from '
 import type { Profile } from '../../hooks/useProfile'
 import { requestFCMToken } from '../../lib/firebase'
 import { supabase } from '../../lib/supabase'
+import { auditLog } from '../../lib/audit'
 
 interface Props {
   profile: Profile | null
@@ -112,6 +113,7 @@ export function ProfileForm({ profile, email, onSave }: Props) {
     })
     setSaving(false)
     if (error) { setError(error.message); return }
+    auditLog('profile_updated', { full_name: fullName.trim() })
     setEditing(false)
   }
 

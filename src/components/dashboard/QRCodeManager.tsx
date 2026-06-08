@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { Download, Plus, Trash2, QrCode, X, Clock, Car, Home } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { auditLog } from '../../lib/audit'
 import { ScanHistory } from './ScanHistory'
 
 interface QRCode {
@@ -65,6 +66,7 @@ export function QRCodeManager({ userId }: Props) {
       .single()
     setCreating(false)
     if (!error && data) {
+      auditLog('qr_created', { name: data.name, template: data.template })
       setCodes((prev) => [data, ...prev])
       setNewName('')
       setNewTemplate('car')
@@ -74,9 +76,11 @@ export function QRCodeManager({ userId }: Props) {
   }
 
   async function deleteCode(id: string) {
+    const code = codes.find(c => c.id === id)
     if (!confirm('Delete this QR code? Anyone with a printed copy will get a "not found" page.')) return
     setDeleting(id)
     await supabase.from('qr_codes').delete().eq('id', id)
+    auditLog('qr_deleted', { name: code?.name, template: code?.template })
     setCodes((prev) => prev.filter((c) => c.id !== id))
     setDeleting(null)
   }
