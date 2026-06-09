@@ -48,6 +48,7 @@ export function AuthForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [resetCooldown, setResetCooldown] = useState(0)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const navigate = useNavigate()
@@ -122,7 +123,7 @@ export function AuthForm() {
       }
     } else if (tab === 'register') {
       const { error } = await supabase.auth.signUp({ email, password })
-      if (error) {
+      if (error && !error.message.toLowerCase().includes('already registered')) {
         setMessage({ type: 'error', text: error.message })
       } else {
         localStorage.setItem('parkpeace_new_user', 'true')
@@ -137,7 +138,15 @@ export function AuthForm() {
       if (error) {
         setMessage({ type: 'error', text: error.message })
       } else {
-        setMessage({ type: 'success', text: 'Password reset email sent. Check your inbox.' })
+        setMessage({ type: 'success', text: 'If an account exists for this email, a reset link has been sent. Check your inbox.' })
+        // 30-second cooldown to prevent spam
+        setResetCooldown(30)
+        const timer = setInterval(() => {
+          setResetCooldown((prev) => {
+            if (prev <= 1) { clearInterval(timer); return 0 }
+            return prev - 1
+          })
+        }, 1000)
       }
     }
     setLoading(false)
@@ -249,7 +258,7 @@ export function AuthForm() {
 
             <button
               type="submit"
-              disabled={loading || (tab === 'register' && (password !== confirm || !confirm))}
+              disabled={loading || (tab === 'register' && (password !== confirm || !confirm)) || (tab === 'forgot' && resetCooldown > 0)}
               className="btn-primary w-full"
             >
               {loading
@@ -258,7 +267,9 @@ export function AuthForm() {
                   ? 'Sign In'
                   : tab === 'register'
                     ? 'Create Account'
-                    : 'Send Reset Link'}
+                    : resetCooldown > 0
+                      ? `Resend in ${resetCooldown}s`
+                      : 'Send Reset Link'}
             </button>
           </form>
         </div>

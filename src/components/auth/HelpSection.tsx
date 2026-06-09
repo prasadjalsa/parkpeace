@@ -208,7 +208,7 @@ function SectionContent({ id }: { id: Section }) {
             <p><strong>1.</strong> On the sign-in page, click the <strong>Sign In</strong> tab.</p>
             <p><strong>2.</strong> Click <strong>Forgot password?</strong> (next to the Password label).</p>
             <p><strong>3.</strong> Enter the email address you registered with and tap <strong>Send Reset Link</strong>.</p>
-            <p><strong>4.</strong> Check your inbox for an email from ParkPeace / Supabase. Check your spam folder if it doesn't arrive within a minute.</p>
+            <p><strong>4.</strong> You'll see a confirmation message. If an account exists for that email, a reset link will be sent. Check your inbox and spam folder.</p>
             <p><strong>5.</strong> Click the link in the email. You'll be taken to the <strong>Reset Password</strong> page.</p>
             <p><strong>6.</strong> Enter your new password and confirm it — a green "Passwords match ✓" indicator confirms they are identical.</p>
             <p><strong>7.</strong> Tap <strong>Set New Password</strong>. You'll be redirected to your dashboard automatically.</p>
