@@ -72,6 +72,8 @@ export function QRCodeManager({ userId }: Props) {
       setNewTemplate('car')
       setNewColor('#16a34a')
       setShowModal(false)
+    } else if (error?.code === '23505') {
+      alert(`A QR code named "${newName.trim()}" already exists. Please choose a different name.`)
     }
   }
 

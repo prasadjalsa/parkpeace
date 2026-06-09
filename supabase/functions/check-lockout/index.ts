@@ -41,12 +41,14 @@ serve(async (req) => {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
     const emailLower = email.toLowerCase()
 
-    // Get current lockout count from profiles
-    const { data: profile } = await supabase
+    // Look up userId via DB function (avoids listUsers() which loads all users)
+    const { data: userId } = await supabase.rpc("get_user_id_by_email", { p_email: emailLower })
+
+    const { data: profile } = userId ? await supabase
       .from("profiles")
       .select("lockout_count, last_lockout_at")
-      .eq("id", (await supabase.auth.admin.getUserByEmail(emailLower)).data?.user?.id ?? "")
-      .single()
+      .eq("id", userId)
+      .single() : { data: null }
 
     const lockoutCount = profile?.lockout_count ?? 0
     const lockoutMinutes = getLockoutMinutes(lockoutCount)
@@ -95,7 +97,6 @@ serve(async (req) => {
 
       // On first lockout — increment lockout_count and record timestamp
       if (justLocked && attempts === MAX_ATTEMPTS) {
-        const userId = (await supabase.auth.admin.getUserByEmail(emailLower)).data?.user?.id
         if (userId) {
           await supabase.from("profiles")
             .update({
@@ -120,7 +121,6 @@ serve(async (req) => {
       // Clear attempts on successful login — reset lockout_count too
       await supabase.from("login_attempts").delete().eq("email", emailLower)
 
-      const userId = (await supabase.auth.admin.getUserByEmail(emailLower)).data?.user?.id
       if (userId) {
         await supabase.from("profiles")
           .update({ lockout_count: 0, last_lockout_at: null })
