@@ -93,7 +93,8 @@ export function AuthForm() {
       // Check if account is locked out
       const lockoutData = await callLockout(email.toLowerCase(), 'check')
       if (lockoutData.locked) {
-        setMessage({ type: 'error', text: 'Too many failed attempts. Account temporarily locked — please try again later.' })
+        const mins = lockoutData.lockoutMinutes
+        setMessage({ type: 'error', text: `Too many failed attempts. Account locked for ${mins} minute${mins !== 1 ? 's' : ''} — please try again later.` })
         setLoading(false)
         return
       }
@@ -103,7 +104,8 @@ export function AuthForm() {
         // Record failure and show remaining attempts
         const failData = await callLockout(email.toLowerCase(), 'record_failure')
         if (failData.locked) {
-          setMessage({ type: 'error', text: 'Too many failed attempts. Account temporarily locked — please try again later.' })
+          const mins = failData.lockoutMinutes
+          setMessage({ type: 'error', text: `Too many failed attempts. Account locked for ${mins} minute${mins !== 1 ? 's' : ''} — please try again later.` })
         } else {
           const remaining = typeof failData.remaining === 'number' ? failData.remaining : null
           setMessage({ type: 'error', text: remaining !== null ? `${error.message} (${remaining} attempt${remaining !== 1 ? 's' : ''} remaining)` : error.message })

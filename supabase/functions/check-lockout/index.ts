@@ -8,7 +8,12 @@ const corsHeaders = {
 }
 
 const MAX_ATTEMPTS = 5
-const WINDOW_MINUTES = 15
+
+// Exponential lockout windows in minutes — capped at 120
+function getLockoutMinutes(lockoutCount: number): number {
+  const windows = [15, 30, 60, 120]
+  return windows[Math.min(lockoutCount, windows.length - 1)]
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,14 +39,24 @@ serve(async (req) => {
     )
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
-    const windowStart = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString()
+    const emailLower = email.toLowerCase()
+
+    // Get current lockout count from profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("lockout_count, last_lockout_at")
+      .eq("id", (await supabase.auth.admin.getUserByEmail(emailLower)).data?.user?.id ?? "")
+      .single()
+
+    const lockoutCount = profile?.lockout_count ?? 0
+    const lockoutMinutes = getLockoutMinutes(lockoutCount)
+    const windowStart = new Date(Date.now() - lockoutMinutes * 60 * 1000).toISOString()
 
     if (action === "check") {
-      // Count recent failures for this email
       const { count } = await supabase
         .from("login_attempts")
         .select("id", { count: "exact", head: true })
-        .eq("email", email.toLowerCase())
+        .eq("email", emailLower)
         .gte("failed_at", windowStart)
 
       const attempts = count ?? 0
@@ -52,7 +67,7 @@ serve(async (req) => {
         locked,
         attempts,
         remaining,
-        lockoutMinutes: locked ? WINDOW_MINUTES : null,
+        lockoutMinutes: locked ? lockoutMinutes : null,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
@@ -60,7 +75,6 @@ serve(async (req) => {
 
     if (action === "record_failure") {
       // Rate limit: max 10 record_failure calls per IP per 5 minutes
-      // Prevents attacker from locking out someone else's account
       if (await isRateLimited(`lockout-record:${ip}`, 10, 300)) {
         return new Response(JSON.stringify({ error: "Too many requests" }), {
           status: 429,
@@ -68,37 +82,50 @@ serve(async (req) => {
         })
       }
 
-      await supabase.from("login_attempts").insert({
-        email: email.toLowerCase(),
-        ip,
-      })
+      await supabase.from("login_attempts").insert({ email: emailLower, ip })
 
-      // Return updated count
       const { count } = await supabase
         .from("login_attempts")
         .select("id", { count: "exact", head: true })
-        .eq("email", email.toLowerCase())
+        .eq("email", emailLower)
         .gte("failed_at", windowStart)
 
       const attempts = count ?? 0
-      const locked = attempts >= MAX_ATTEMPTS
+      const justLocked = attempts >= MAX_ATTEMPTS
+
+      // On first lockout — increment lockout_count and record timestamp
+      if (justLocked && attempts === MAX_ATTEMPTS) {
+        const userId = (await supabase.auth.admin.getUserByEmail(emailLower)).data?.user?.id
+        if (userId) {
+          await supabase.from("profiles")
+            .update({
+              lockout_count: lockoutCount + 1,
+              last_lockout_at: new Date().toISOString(),
+            })
+            .eq("id", userId)
+        }
+      }
 
       return new Response(JSON.stringify({
-        locked,
+        locked: justLocked,
         attempts,
         remaining: Math.max(0, MAX_ATTEMPTS - attempts),
-        lockoutMinutes: locked ? WINDOW_MINUTES : null,
+        lockoutMinutes: justLocked ? getLockoutMinutes(lockoutCount + 1) : null,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
 
     if (action === "reset") {
-      // Clear attempts on successful login
-      await supabase
-        .from("login_attempts")
-        .delete()
-        .eq("email", email.toLowerCase())
+      // Clear attempts on successful login — reset lockout_count too
+      await supabase.from("login_attempts").delete().eq("email", emailLower)
+
+      const userId = (await supabase.auth.admin.getUserByEmail(emailLower)).data?.user?.id
+      if (userId) {
+        await supabase.from("profiles")
+          .update({ lockout_count: 0, last_lockout_at: null })
+          .eq("id", userId)
+      }
 
       return new Response(JSON.stringify({ reset: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
