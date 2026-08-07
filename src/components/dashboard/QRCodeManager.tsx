@@ -87,7 +87,7 @@ export function QRCodeManager({ userId }: Props) {
     setDeleting(null)
   }
 
-  function downloadQR(id: string, name: string, template: 'car' | 'home' = 'car', headerColor = '#16a34a', textColor = '#ffffff') {
+  async function downloadQR(id: string, name: string, template: 'car' | 'home' = 'car', headerColor = '#16a34a', textColor = '#ffffff') {
     const qrCanvas = document.getElementById(`qr-${id}`) as HTMLCanvasElement
     if (!qrCanvas) return
 
@@ -165,10 +165,20 @@ export function QRCodeManager({ userId }: Props) {
     ctx.font = '11px system-ui, sans-serif'
     ctx.fillText('Powered by ParkPeace', W / 2, H - 10)
 
-    const link = document.createElement('a')
-    link.download = `${name.replace(/\s+/g, '-')}-parkpeace-qr.png`
-    link.href = card.toDataURL('image/png')
-    link.click()
+    const filename = `${name.replace(/\s+/g, '-')}-parkpeace-qr.png`
+    const blob = await new Promise<Blob>((res) => card.toBlob((b) => res(b!), 'image/png'))
+    const file = new File([blob], filename, { type: 'image/png' })
+
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+    if (isIOS && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file] })
+    } else {
+      const link = document.createElement('a')
+      link.download = filename
+      link.href = URL.createObjectURL(blob)
+      link.click()
+      URL.revokeObjectURL(link.href)
+    }
   }
 
   if (loading) {
